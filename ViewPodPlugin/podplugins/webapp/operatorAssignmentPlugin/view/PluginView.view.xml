@@ -1,0 +1,72 @@
+<mvc:View xmlns:l="sap.ui.layout" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:fb="sap.ui.comp.filterbar"
+    controllerName="Kusuma.ext.viewplugins.operatorAssignmentPlugin.controller.PluginView" width="100%" height="100%">
+    <Page id="page" title="{i18n>title}">
+        <fb:FilterBar id="filterbar" persistencyKey="myPersKey" useToolbar="false" search=".onSearch"
+            filterChange=".onFilterChange" afterVariantLoad=".onAfterVariantLoad">
+            <fb:filterItems>
+                <fb:FilterItem name="Name" label="Order">
+                    <fb:control>
+                        <Input id="OrderId" showValueHelp="true" valueHelpRequest="onOrderRequest" />
+                    </fb:control>
+                </fb:FilterItem>
+
+
+            </fb:filterItems>
+        </fb:FilterBar>
+
+
+
+        <Table id="idOrderTable" inset="false" mode="MultiSelect" selectionChange="onSelectionChange" items="{
+			path: 'data>/Orders/content'}">
+            <headerToolbar>
+                <OverflowToolbar>
+                    <content>
+                        <Title text="" level="H2" />
+                        <ToolbarSpacer />
+                        <Button id="idAssign" text="Assign" enabled="false" />
+                        <Button id="idRevoke" text="Revoke" enabled="false" />
+                        <Button id="idAdd" text="ADD" enabled="false" />
+                        <Button id="idRemove" text="Remove" enabled="false" />
+                    </content>
+                </OverflowToolbar>
+            </headerToolbar>
+
+            <columns>
+                <Column width="12em">
+                    <Text text="Work Center" />
+                </Column>
+                <Column minScreenWidth="Tablet" demandPopin="true">
+                    <Text text="Phase Id" />
+                </Column>
+                <Column minScreenWidth="Desktop" demandPopin="true" hAlign="End">
+                    <Text text="Material Description" />
+                </Column>
+                <Column minScreenWidth="Desktop" demandPopin="true" hAlign="Center">
+                    <Text text="Material" />
+                </Column>
+                <Column hAlign="End">
+                    <Text text="Scale" />
+                </Column>
+                <Column hAlign="End">
+                    <Text text="Scale Type" />
+                </Column>
+                <Column hAlign="End">
+                    <Text text="Operator" />
+                </Column>
+            </columns>
+            <items>
+                <ColumnListItem vAlign="Middle">
+                    <cells>
+                        <Text text="{data>order}" />
+                        <Text text="" />
+                        <Text text="{data>material/description}" />
+                        <Text text="{data>material/material}" />
+                        <Text text="" />
+                        <Text text="" />
+                        <Text text="" />
+                    </cells>
+                </ColumnListItem>
+            </items>
+        </Table>
+    </Page>
+</mvc:View>

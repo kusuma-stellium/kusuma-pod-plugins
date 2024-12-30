@@ -1,0 +1,14 @@
+{
+    "components" : [
+        {
+            "id": "operatorAssignmentPlugin",
+            "type": "VIEW_PLUGIN",
+            "allowMultipleInstances": false,
+            "name": "Kusuma.ext.viewplugins.operatorAssignmentPlugin",
+            "propertyEditor": "Kusuma.ext.viewplugins.operatorAssignmentPlugin.builder.PropertyEditor",
+            "i18n": "Kusuma.ext.viewplugins.operatorAssignmentPlugin.i18n.i18n",
+            "productionProcessEnabled": false,
+            "supportedPodTypes": ["WORK_CENTER","OPERATION", "ORDER", "OTHER", "MONITOR"]
+        }
+    ]
+}
