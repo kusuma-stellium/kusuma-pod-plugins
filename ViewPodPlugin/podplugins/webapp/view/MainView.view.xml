@@ -23,11 +23,11 @@
                                                 wrappingType="Hyphenated"
                                                 text="Demonstrates a 'View' type plugin that displays current selection information in the POD during runtime.  This also demonstrates how to define and implement the necessary functions to subscribe to a custom notification event. This plugin also shows how to call public API to read material custom data." />
                                         </l:BlockLayoutCell>
-                                        <l:BlockLayoutCell title="Mass Operrator Assignment">
+                                        <l:BlockLayoutCell title="Mass Operator Assignment">
                                             <Text
                                                 id="text3"
                                                 wrappingType="Hyphenated"
-                                                text="Mass Operrator Assignment to start development with custom POD Plugin." />
+                                                text="Mass Operator Assignment to start development with custom POD Plugin." />
                                         </l:BlockLayoutCell>
                                     </l:BlockLayoutRow>
                                 </l:BlockLayout>
