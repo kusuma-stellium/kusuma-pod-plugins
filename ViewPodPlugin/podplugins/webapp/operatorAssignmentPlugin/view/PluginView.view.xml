@@ -3,21 +3,37 @@
     <Page id="page" title="{i18n>title}">
         <fb:FilterBar id="filterbar" persistencyKey="myPersKey" useToolbar="false" search=".onSearch"
             filterChange=".onFilterChange" afterVariantLoad=".onAfterVariantLoad">
-            <fb:filterItems>
-                <fb:FilterItem name="Name" label="Order">
+
+            <fb:filterGroupItems>
+                <fb:FilterGroupItem id="idOrderSearchFGI" name="Search" label="Order" groupName="Group1"
+                    visibleInFilterBar="true">
                     <fb:control>
-                        <Input id="OrderId" showValueHelp="true" valueHelpRequest="onOrderRequest" />
+                        <Input id="OrderId" showValueHelp="true" valueHelpRequest="onOrderValueHelpRequest"
+                            value="{data>/order}" required="true" />
+
                     </fb:control>
-                </fb:FilterItem>
+                </fb:FilterGroupItem>
+                <fb:FilterGroupItem id="idSFCFilterFGI" name="SFC" label="SFC" groupName="Group1"
+                    visibleInFilterBar="true">
+                    <fb:control>
+                        <Input id="idSFCFilterInput" />
+                    </fb:control>
+                </fb:FilterGroupItem>
+                <fb:FilterGroupItem id="idPlannedStartFGI" name="PlannedStart" label="Material" groupName="Group1"
+                    visibleInFilterBar="true">
+                    <fb:control>
+                        <Input id="MaterialId" showValueHelp="true" valueHelpRequest="onMaterialValueHelpRequest"
+                            value="{data>/Material}" required="false" />
 
+                    </fb:control>
+                </fb:FilterGroupItem>
 
-            </fb:filterItems>
+            </fb:filterGroupItems>
         </fb:FilterBar>
 
-
-
-        <Table id="idOrderTable" inset="false" mode="MultiSelect" selectionChange="onSelectionChange" items="{
-			path: 'data>/Orders/content'}">
+        <Table id="idOrderTable" inset="false" mode="MultiSelect" growing="true" selectionChange="onSelectionChange"
+            updateStarted="onBeforeTableUpdate" items="{
+			path: 'data>/'}">
             <headerToolbar>
                 <OverflowToolbar>
                     <content>
@@ -33,35 +49,52 @@
 
             <columns>
                 <Column width="12em">
+                    <Text text="WC Desc." />
+                </Column>
+                <Column width="12em">
                     <Text text="Work Center" />
                 </Column>
-                <Column minScreenWidth="Tablet" demandPopin="true">
+                <Column demandPopin="true">
                     <Text text="Phase Id" />
                 </Column>
-                <Column minScreenWidth="Desktop" demandPopin="true" hAlign="End">
-                    <Text text="Material Description" />
+                <Column demandPopin="true">
+                    <Text text="Component Description" />
                 </Column>
-                <Column minScreenWidth="Desktop" demandPopin="true" hAlign="Center">
-                    <Text text="Material" />
+                <Column demandPopin="true">
+                    <Text text="Component" />
                 </Column>
-                <Column hAlign="End">
-                    <Text text="Scale" />
+                <Column demandPopin="true">
+                    <Text text="Assets/Resources" />
                 </Column>
-                <Column hAlign="End">
-                    <Text text="Scale Type" />
+                <Column demandPopin="true">
+                    <Text text="Resource Type" />
                 </Column>
-                <Column hAlign="End">
+                <Column demandPopin="true" hAlign="End">
                     <Text text="Operator" />
                 </Column>
+                <Column demandPopin="true" hAlign="Center">
+                    <Text text="Acceptance Type" />
+                </Column>
+                <Column hAlign="End">
+                    <Text text="Acceptance Delay" />
+                </Column>
+                <Column hAlign="End">
+                    <Text text="Last Modified" />
+                </Column>
+
             </columns>
             <items>
                 <ColumnListItem vAlign="Middle">
                     <cells>
-                        <Text text="{data>order}" />
+                        <Text text="{data>workCenters/description}" />
+                        <Text text="{data>workCenters/workCenter}" />
                         <Text text="" />
                         <Text text="{data>material/description}" />
                         <Text text="{data>material/material}" />
+                        <Input></Input>
                         <Text text="" />
+                        <Input></Input>
+                        <Input></Input>
                         <Text text="" />
                         <Text text="" />
                     </cells>

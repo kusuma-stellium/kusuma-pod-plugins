@@ -1,0 +1,91 @@
+<mvc:View xmlns:l="sap.ui.layout" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:fb="sap.ui.comp.filterbar"
+    controllerName="Kusuma.ext.viewplugins.newConfirmationPlugin.controller.PluginView" width="100%" height="100%">
+     <Panel id="podModelPluginPanel" width="100%" height="100%" expandable="false" expanded="true"
+        accessibleRole="Region" backgroundDesign="Transparent">
+        <content>
+         <Table id="quantityConfirmationTable" growing="true" growingThreshold="20" growingScrollToLoad="false"
+                inset="false" headerText="{i18n>yieldQtyData.QuantityConfirmation}" items="{quantitiesModel>/value}">
+                <columns>
+                    <Column hAlign="End">
+                        <Text text="{i18n>yieldQtyData.YieldQuantity}" />
+                    </Column>
+                    <Column hAlign="End">
+                        <Text text="{i18n>yieldQtyData.ScrapQuantity}" />
+                    </Column>
+                    <Column></Column>
+                </columns>
+                <items>
+                    <ColumnListItem>
+                        <cells>
+                            <Text text="{
+                                    parts : [
+                                        'quantitiesModel>totalYieldQuantity/value',
+                                        'quantitiesModel>totalYieldQuantity/unitOfMeasure/uom'],
+                                    formatter:'.showValueWithUom'
+                                }" textAlign="Right" />
+                            <Text text="{
+                                    parts : [
+                                        'quantitiesModel>totalScrapQuantity/value',
+                                        'quantitiesModel>totalScrapQuantity/unitOfMeasure/uom'
+                                    ],
+                                    formatter:'.showValueWithUom'
+                                }" textAlign="Right" />
+                            <FlexBox justifyContent="Center">
+                                <items>
+                                    <Button tooltip="{i18n>report.quantity}"
+                                        enabled="{= !!${quantitiesModel>userAuthorizedForWorkCenter} &amp;&amp; ${quantitiesModel>status} !== 'COMPLETED'}"
+                                        text="{i18n>report.quantity}" press="onOpenReportQuantityDialog"
+                                        type="Emphasized" />
+                                </items>
+                            </FlexBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+            <Table id="activityList"
+                items="{ path: '/activitySummary', sorter: { path: 'sequence', descending: false } }"
+                class="sapUiSizeCompact">
+                <headerToolbar id="activityListHeaderToolbar" aria-label="{i18n>headerToolbar}">
+                    <Toolbar>
+                        <Title id="titleText" text="{i18n>Activities}" level="H2" />
+                        <ToolbarSpacer />
+                        <!-- <Button id="reportButton" ariaDescribedBy="activityListHeaderToolbar"
+                            ariaLabelledBy="activityListHeaderToolbar" text="{i18n>Report}" tooltip="{i18n>Report}"
+                            type="Emphasized" press="onPressReportButton"
+                            enabled="{parts : ['/userAuthorizedForWorkCenter','/isActivityExist', '/isDone'], formatter:'.oFormatter.formatReportButton'}" /> -->
+                    </Toolbar>
+                </headerToolbar>
+                <columns>
+                    <Column hAlign="Left" vAlign="Middle">
+                        <Text text="{i18n>Parameters}" />
+                    </Column>
+                    <Column hAlign="End" vAlign="Middle">
+                        <Text text="{i18n>StandardValue}" />
+                    </Column>
+                    <Column hAlign="End" vAlign="Middle">
+                        <Text text="{i18n>Reported}" />
+                    </Column>
+                    <Column hAlign="End" vAlign="Middle" />
+                </columns>
+                <items>
+                    <ColumnListItem>
+                        <cells>
+                            <Text
+                                text="{parts : ['activityId','activityText'], formatter:'.oFormatter.showActivityIdWithText'}" />
+                            <Text
+                                text="{parts : ['targetQuantity/value','targetQuantity/unitOfMeasure/uom'],formatter:'.oFormatter.showValueWithUom'}" />
+                            <Text
+                                text="{parts : ['actualQuantity/value','actualQuantity/unitOfMeasure/uom'],formatter:'.oFormatter.showValueWithUom'}" />
+                            <Button text="{i18n>Postings}" tooltip="{i18n>Postings}" class="sapUiSmallMarginBegin"
+                                press="onPressPostingButton"
+                                enabled="{parts : ['actualQuantity/value'], formatter:'.oFormatter.enablePostingsButton'}" />
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+           
+           
+          
+        </content>
+    </Panel>
+</mvc:View>
