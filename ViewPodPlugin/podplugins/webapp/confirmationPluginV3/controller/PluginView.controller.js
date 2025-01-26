@@ -878,7 +878,7 @@ sap.ui.define(
             operationActivity: this.activityConfirmationPluginList.operationActivity,
             stepId: this.activityConfirmationPluginList.stepId,
             workCenter: this.activityConfirmationPluginList.workCenter,
-           
+
             finalConfirmation: this.byId('finalConfirmation').getSelected()
           };
 
@@ -2332,8 +2332,8 @@ sap.ui.define(
           var oYieldInput = this.byId("yieldQuantity");
           var oScrapInput = this.byId("scrapQuantity");
 
-        //  var oSfcQuantityInput = this.getPodSelectionModel().selectedOrderData.plannedQty
-           var oSfcQuantityInput =this.getPodSelectionModel().selectedOrderData.sfcPlannedQty
+          //  var oSfcQuantityInput = this.getPodSelectionModel().selectedOrderData.plannedQty
+          var oSfcQuantityInput = this.getPodSelectionModel().selectedOrderData.sfcPlannedQty
 
           var yieldValue = parseFloat(oYieldInput.getValue()) || 0;
           var scrapValue = parseFloat(oScrapInput.getValue()) || 0;
@@ -2341,6 +2341,38 @@ sap.ui.define(
           //var sfcquantity = this.getPodSelectionModel().selectedOrderData.sfcPlannedQtyInProductionUom
           if ((yieldValue + scrapValue) > sfcQuantityValue) {
             MessageBox.error("Quantity (sum of yield and scrap) should not exceed SFC quantity");
+            oYieldInput.setValueState(sap.ui.core.ValueState.Error);
+            oScrapInput.setValueState(sap.ui.core.ValueState.Error);
+            return;
+          } else {
+            oYieldInput.setValueState(sap.ui.core.ValueState.None);
+            oScrapInput.setValueState(sap.ui.core.ValueState.None);
+          }
+          var oModelData = this.getView().getModel("quantitiesModel").getData().value;
+
+          var totalYieldQuantity = 0;
+
+          // Iterate through the data and sum the yield quantities
+          oModelData.forEach(function (item) {
+            // Assuming yield quantity is stored in the 'yieldQuantity' property
+            var yieldQuantity = parseFloat(item.totalYieldQuantity.value);
+            var ScrapQuantity = parseFloat(item.totalScrapQuantity.value);
+            totalYieldQuantity += yieldQuantity + ScrapQuantity;
+          });
+          var Remaining = sfcQuantityValue - totalYieldQuantity;
+          if ((yieldValue + scrapValue) > Remaining) {
+            MessageBox.error("Remaining SFC Quantity : " + Remaining + "");
+            oYieldInput.setValueState(sap.ui.core.ValueState.Error);
+            oScrapInput.setValueState(sap.ui.core.ValueState.Error);
+            return;
+          }
+          else {
+            oYieldInput.setValueState(sap.ui.core.ValueState.None);
+            oScrapInput.setValueState(sap.ui.core.ValueState.None);
+          }
+
+          if (totalYieldQuantity >= sfcQuantityValue) {
+            MessageBox.error("SFC quantity has already been reported");
             oYieldInput.setValueState(sap.ui.core.ValueState.Error);
             oScrapInput.setValueState(sap.ui.core.ValueState.Error);
             return;
@@ -2440,7 +2472,7 @@ sap.ui.define(
               if (oRequestData.finalConfirmation == true) {
                 that.publish('phaseCompleteEvent', that);
               }
-             // that.reportActivity();
+              // that.reportActivity();
               // that.byId('quantityConfirmationTable').setBusy(false);
             },
             function (oError, oHttpErrorMessage) {
