@@ -4,7 +4,7 @@
         <subHeader>
             <Bar>
                 <contentMiddle>
-                    <SearchField id="searchBarReasonCode" liveChange="handleSearchForReasonCodeDialog" />
+                    <SearchField id="searchBarReason" liveChange="handleSearchForReasonCodeDialog" />
                 </contentMiddle>
             </Bar>
         </subHeader>

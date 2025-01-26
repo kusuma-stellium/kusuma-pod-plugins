@@ -10,16 +10,7 @@
             "productionProcessEnabled": false,
             "supportedPodTypes": ["WORK_CENTER","OPERATION", "ORDER", "OTHER", "MONITOR"]
         },
-        {
-            "id": "newConfirmationPlugin",
-            "type": "VIEW_PLUGIN",
-            "allowMultipleInstances": false,
-            "name": "Kusuma.ext.viewplugins.newConfirmationPlugin",
-            "propertyEditor": "Kusuma.ext.viewplugins.newConfirmationPlugin.builder.PropertyEditor",
-            "i18n": "Kusuma.ext.viewplugins.newConfirmationPlugin.i18n.i18n",
-            "productionProcessEnabled": false,
-            "supportedPodTypes": ["WORK_CENTER","OPERATION", "ORDER", "OTHER", "MONITOR"]
-        },
+        
         {
             "id": "confirmationPluginV2",
             "type": "VIEW_PLUGIN",
@@ -29,6 +20,38 @@
             "i18n": "Kusuma.ext.viewplugins.confirmationPluginV2.i18n.i18n",
             "productionProcessEnabled": false,
             "supportedPodTypes": ["WORK_CENTER","OPERATION", "ORDER", "OTHER", "MONITOR"]
+        },
+        {
+            "id": "confirmationPluginV3",
+            "type": "VIEW_PLUGIN",
+            "allowMultipleInstances": false,
+            "name": "Kusuma.ext.viewplugins.confirmationPluginV3",
+            "propertyEditor": "Kusuma.ext.viewplugins.confirmationPluginV3.builder.PropertyEditor",
+            "i18n": "Kusuma.ext.viewplugins.confirmationPluginV3.i18n.i18n",
+            "productionProcessEnabled": false,
+            "supportedPodTypes": ["WORK_CENTER","OPERATION", "ORDER", "OTHER", "MONITOR"]
+        },
+        {
+            "id": "GoodsReceiptPlugin",
+            "type": "VIEW_PLUGIN",
+            "allowMultipleInstances": false,
+            "name": "Kusuma.ext.viewplugins.GoodsReceiptPlugin",
+            "propertyEditor": "Kusuma.ext.viewplugins.GoodsReceiptPlugin.builder.PropertyEditor",
+            "i18n": "Kusuma.ext.viewplugins.GoodsReceiptPlugin.i18n.i18n",
+            "productionProcessEnabled": false,
+            "supportedPodTypes": ["WORK_CENTER","OPERATION", "ORDER", "OTHER", "MONITOR"]
+        },
+        {
+            "id": "GRPlugin",
+            "type": "VIEW_PLUGIN",
+            "allowMultipleInstances": false,
+            "name": "Kusuma.ext.viewplugins.GRPlugin",
+            "propertyEditor": "Kusuma.ext.viewplugins.GRPlugin.builder.PropertyEditor",
+            "i18n": "Kusuma.ext.viewplugins.GRPlugin.i18n.i18n",
+            "productionProcessEnabled": false,
+            "supportedPodTypes": ["WORK_CENTER","OPERATION", "ORDER", "OTHER", "MONITOR"]
         }
+        
+       
     ]
 }

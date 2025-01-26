@@ -1,0 +1,31 @@
+{
+    "sap.app": {
+        "id": "Kusuma.ext.viewplugins.GRPlugin",
+        "type": "component",
+        "applicationVersion": {
+            "version": "1.0.0"
+        },
+        "embeddedBy": "../"
+    },
+
+    "sap.ui5": {
+        "rootView": {
+            "viewName": "Kusuma.ext.viewplugins.GRPlugin.view.PluginView",
+            "type": "XML",
+            "id": "viewPluginTemplate"
+        },
+        "resources": {
+            "css": [{
+                "uri": "css/style.css"
+            }]
+        },
+        "models": {
+            "i18n": {
+                "type": "sap.ui.model.resource.ResourceModel",
+                "settings": {
+                    "bundleName": "Kusuma.ext.viewplugins.GRPlugin.i18n.i18n"
+                }
+            }
+        }
+    }
+}

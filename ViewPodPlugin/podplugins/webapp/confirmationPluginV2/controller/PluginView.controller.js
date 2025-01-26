@@ -878,6 +878,7 @@ sap.ui.define(
             operationActivity: this.activityConfirmationPluginList.operationActivity,
             stepId: this.activityConfirmationPluginList.stepId,
             workCenter: this.activityConfirmationPluginList.workCenter,
+           
             finalConfirmation: this.byId('finalConfirmation').getSelected()
           };
 
@@ -951,7 +952,7 @@ sap.ui.define(
           var sUrl = activityConfirmationUrl + 'activityconfirmation/confirm';
           this.onPressConfirmActivityDialog();
           this.postActivityData(sUrl, this.dataToBeConfirmed);
-          //this.onCloseReportActivityDialog();
+          this.onCloseReportQuantityDialog();
         },
 
         postActivityData: function (sUrl, oData) {
@@ -1234,7 +1235,7 @@ sap.ui.define(
             }
           );
         },
-        _validatePhaseStatus: function() {
+        _validatePhaseStatus: function () {
           if (this.selectedOrderData.status === 'ACTIVE') return true;
           return false;
         },
@@ -1247,10 +1248,10 @@ sap.ui.define(
           //     MessageBox.error("Phase "+this.selectedOrderData.truncatedPhaseId+" is not in Active Status");
           //      return;
           //  } 
-            if (!this._validatePhaseStatus()) {
-              MessageBox.error("Phase "+this.selectedOrderData.truncatedPhaseId+" is not in Active Status");
-              return;
-            }
+          if (!this._validatePhaseStatus()) {
+            MessageBox.error("Phase " + this.selectedOrderData.truncatedPhaseId + " is not in Active Status");
+            return;
+          }
           this.callServiceForTimeElementDesc();
 
           oPostModel.setProperty('/reasonCodeKey', '');
@@ -1382,6 +1383,7 @@ sap.ui.define(
                 oUOM.setModel(this.getView().getModel("uModel"));
                 this.byId('yieldQuantity').setValueState(sap.ui.core.ValueState.None);
                 this.byId('scrapQuantity').setValueState(sap.ui.core.ValueState.None);
+                this.byId('finalConfirmation').setSelected(false);
                 //  oUOM.setSelectedKey(this.activityConfirmationPluginList.activitySummary[0].targetQuantity.unitOfMeasure.internalUom);
                 oDialog.open();
                 this.byId('postingDate').setValue(this.getCurrentDateInPlantTimeZone());
@@ -1415,6 +1417,7 @@ sap.ui.define(
             oUOM.setModel(this.getView().getModel("uModel"));
             this.byId('yieldQuantity').setValueState(sap.ui.core.ValueState.None);
             this.byId('scrapQuantity').setValueState(sap.ui.core.ValueState.None);
+            this.byId('finalConfirmation').setSelected(false);
             // oUOM.setSelectedKey(this.activityConfirmationPluginList.activitySummary[0].targetQuantity.unitOfMeasure.internalUom);
             this.byId('reportQuantityDialog').open();
             this.byId('postingDate').setValue(this.getCurrentDateInPlantTimeZone());
@@ -1550,7 +1553,7 @@ sap.ui.define(
             this.getView().addDependent(this.selectReasonCodeDialog);
           }
 
-          this.selectReasonCodeDialog.open();
+
 
           setTimeout(function () {
             that.prepareReasonCodeTable();
@@ -1558,7 +1561,8 @@ sap.ui.define(
               .getCore()
               .byId(sap.ui.core.Fragment.createId('selectReasonCodeDialog', 'dialogForSelectCode'));
             dialogForSelectCode.setBusy(false);
-          }, 3000);
+            that.selectReasonCodeDialog.open();
+          });
         },
         handleSearchForReasonCodeDialog: function (oEvent) {
           var properties = ['ID', 'description', 'reasonForVariance'];
@@ -1828,7 +1832,7 @@ sap.ui.define(
             null,
             function (oData) {
               this.listOfTimeElementAndDesc = oData;
-              this.busyDialog.close();
+              //this.busyDialog.close();
             }.bind(this),
             function (errorObject) {
               this.errorHandler(errorObject);
@@ -1936,7 +1940,7 @@ sap.ui.define(
           if (this.selectReasonCodeDialog) {
             sap.ui
               .getCore()
-              .byId(sap.ui.core.Fragment.createId('selectReasonCodeDialog', 'searchBarReasonCode'))
+              .byId(sap.ui.core.Fragment.createId('selectReasonCodeDialog', 'searchBarReason'))
               .setValue('');
           }
           oEvent.getSource().getParent().close();
@@ -1947,7 +1951,7 @@ sap.ui.define(
           if (this.selectReasonCodeDialog) {
             sap.ui
               .getCore()
-              .byId(sap.ui.core.Fragment.createId('selectReasonCodeDialog', 'searchBarReasonCode'))
+              .byId(sap.ui.core.Fragment.createId('selectReasonCodeDialog', 'searchBarReason'))
               .setValue('');
           }
 
@@ -2051,11 +2055,11 @@ sap.ui.define(
         },
 
         onCloseReportQuantityDialog: function () {
-
+          // sap.ui.getCore().byId('activityFinalConfirmation').setSelected(false);
           this.getView().byId('reportQuantityDialog').close();
 
           //Reset the fields
-          // this._resetFields();
+          this._resetFields();
           // var oTable = this.byId("activity");
           // var aItems = oTable.getItems();
           // var bAnyValuePresent = false;
@@ -2113,18 +2117,55 @@ sap.ui.define(
           this.byId('postingDate').setValue('');
           this.customFieldJson = [];
 
-          this.byId('quantityConfirmBtn').setEnabled(false);
+          //this.byId('quantityConfirmBtn').setEnabled(false);
 
           ErrorHandler.clearErrorState(this.byId('yieldQuantity'));
           ErrorHandler.clearErrorState(this.byId('scrapQuantity'));
           ErrorHandler.clearErrorState(this.byId('postedBy'));
           ErrorHandler.clearErrorState(this.byId('postingDate'));
         },
+        onYieldQuantityChange: function (oEvent) {
+          var oInput = oEvent.getSource();
+          var oTable = this.byId("activity");
+          var aItems = oTable.getItems();
+
+          aItems.forEach(function (oItem) {
+            var aCells = oItem.getCells();
+            var oYieldInput = aCells[0];
+            var oUpdateInput = aCells[1];
+
+            if (oYieldInput === oInput) {
+              var fYieldValue = parseFloat(oInput.getValue());
+              oUpdateInput.setValue(fYieldValue);
+              oUpdateInput.setEditable(false);
+            }
+          });
+
+          console.log("Updated the corresponding fields and set them to non-editable.");
+        },
 
         onYieldQuantityLiveChange: function (oEvent) {
           var oView = this.getView(),
             oPostModel = oView.getModel('qtyPostModel'),
             value = oEvent.getSource().getValue();
+          var oInput = oEvent.getSource();
+          var oTable = this.byId("activity");
+          var aItems = oTable.getItems();
+
+          // aItems.forEach(function (oItem) {
+          //   var aCells = oItem.getCells();
+          //   var oYieldInput = aCells[0];
+          //   var oUpdateInput = aCells[1];
+
+          //   var fYieldValue = parseFloat(oInput.getValue());
+          //   oUpdateInput.setValue(fYieldValue);
+          //   oUpdateInput.setEditable(false);
+          //   if(!(oInput.getValue())){
+          //     oUpdateInput.setValue("");
+          //     oUpdateInput.setEditable(true);
+          //  }
+
+          // });
 
           if (Number.isNaN(value) || (value && !this._validatePositiveNumber(value)) || parseFloat(value) === 0) {
             ErrorHandler.setErrorState(oEvent.getSource(), this.getI18nText('POSITIVE_INPUT'));
@@ -2218,7 +2259,7 @@ sap.ui.define(
           }
 
           var oScrapQtyInput = this.byId('scrapQuantity'),
-         oYieldQtyInput = this.byId('yieldQuantity'),
+            oYieldQtyInput = this.byId('yieldQuantity'),
             oReasonCodeInput = this.byId('reasonCode');
 
           if (oScrapQtyInput.getValueState() == 'Error') {
@@ -2231,23 +2272,23 @@ sap.ui.define(
           }
           var oYieldInput = this.byId("yieldQuantity");
           var oScrapInput = this.byId("scrapQuantity");
-          
-          var oSfcQuantityInput =this.getPodSelectionModel().selectedOrderData.sfcPlannedQtyInProductionUom
-        // var oSfcQuantityInput =this.getPodSelectionModel().selectedOrderData.sfcPlannedQty
-          
+
+          //var oSfcQuantityInput = this.getPodSelectionModel().selectedOrderData.plannedQty
+          var oSfcQuantityInput =this.getPodSelectionModel().selectedOrderData.sfcPlannedQty
+
           var yieldValue = parseFloat(oYieldInput.getValue()) || 0;
           var scrapValue = parseFloat(oScrapInput.getValue()) || 0;
           var sfcQuantityValue = parseFloat(oSfcQuantityInput) || 0;
-        //var sfcquantity = this.getPodSelectionModel().selectedOrderData.sfcPlannedQtyInProductionUom
-        if ((yieldValue + scrapValue) > sfcQuantityValue) {
-          MessageBox.error("Quantity (sum of yield and scrap) should not exceed SFC quantity");
-          oYieldInput.setValueState(sap.ui.core.ValueState.Error);
-          oScrapInput.setValueState(sap.ui.core.ValueState.Error);
-          return;
-      } else {
-          oYieldInput.setValueState(sap.ui.core.ValueState.None);
-          oScrapInput.setValueState(sap.ui.core.ValueState.None);
-      }
+          //var sfcquantity = this.getPodSelectionModel().selectedOrderData.sfcPlannedQtyInProductionUom
+          if ((yieldValue + scrapValue) > sfcQuantityValue) {
+            MessageBox.error("Quantity (sum of yield and scrap) should not exceed SFC quantity");
+            oYieldInput.setValueState(sap.ui.core.ValueState.Error);
+            oScrapInput.setValueState(sap.ui.core.ValueState.Error);
+            return;
+          } else {
+            oYieldInput.setValueState(sap.ui.core.ValueState.None);
+            oScrapInput.setValueState(sap.ui.core.ValueState.None);
+          }
 
           //Check if reason code is provided in case of scrap quantity
           if (oScrapQtyInput.getValue() && !oReasonCodeInput.getValue()) {
@@ -2258,7 +2299,7 @@ sap.ui.define(
           if (!this.byId('yieldQuantity').getValue()) {
             this.qtyPostData.yieldQuantity.value = '';
           }
-         
+
 
 
 
@@ -2310,8 +2351,9 @@ sap.ui.define(
           // this.postGrData(sUrl, this.qtyPostData);
           this.reportQuantity();
           this.reportActivity();
+          
 
-          this.onCloseReportQuantityDialog();
+         // this.onCloseReportQuantityDialog();
         },
 
         reportQuantity: function () {
@@ -2330,8 +2372,9 @@ sap.ui.define(
             sUrl,
             oRequestData,
             function (oResponseData) {
-              MessageToast.show(that.getI18nText('POSTING_SUCCESSFUL'));
+              //MessageToast.show(that.getI18nText('POSTING_SUCCESSFUL'));
               that.getQuantityConfirmationSummary(that.selectedOrderData);
+              //that.reportActivity();
               that.publish('refreshPhaseList', { stepId: that.selectedOrderData.stepId });
               that.publish('phaseStartEvent', that);
               if (that.selectedOrderData.erpAutoGRStatus) {
@@ -2340,6 +2383,7 @@ sap.ui.define(
               if (oRequestData.finalConfirmation == true) {
                 that.publish('phaseCompleteEvent', that);
               }
+             
               // that.byId('quantityConfirmationTable').setBusy(false);
             },
             function (oError, oHttpErrorMessage) {

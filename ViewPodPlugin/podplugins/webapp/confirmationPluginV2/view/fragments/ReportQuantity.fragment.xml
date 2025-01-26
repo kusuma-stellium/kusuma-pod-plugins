@@ -10,7 +10,7 @@
                     value="{formatOptions : { parseAsString : true, strictGroupingValidation : true },parts:[{path:'qtyPostModel>/yieldQuantity/value'},{path:'qtyPostModel>/yieldQuantity/unitOfMeasure/uom'}], type:'.types.quantity'}"
                     liveChange="onQuantityLiveChange" /> -->
                 <Input id="yieldQuantity" textAlign="Right" value="{qtyPostModel>/yieldQuantity/value}"
-                    liveChange="onYieldQuantityLiveChange" />
+                    liveChange="onYieldQuantityLiveChange"  />
                 <Select id="uomYield" items="{unitModel>/}" change="selectUom($event, 'yieldQuantity')"
                     selectedKey="{qtyPostModel>/yieldQuantity/unitOfMeasure/uom}" enabled="true">
                     <layoutData>
