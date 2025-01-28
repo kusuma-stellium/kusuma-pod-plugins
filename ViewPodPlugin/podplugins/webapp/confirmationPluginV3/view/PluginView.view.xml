@@ -155,8 +155,9 @@
                 <items>
                     <ColumnListItem>
                         <cells>
-                            <Text
-                                text="{parts : ['activityId','activityText'], formatter:'.oFormatter.showActivityIdWithText'}" />
+                            <!-- <Text
+                                text="{parts : ['activityId','activityText'], formatter:'.oFormatter.showActivityIdWithText'}" /> -->
+                            <Text text="{activityText}"/>
                             <Text
                                 text="{parts : ['targetQuantity/value','targetQuantity/unitOfMeasure/uom'],formatter:'.oFormatter.showValueWithUom'}" />
                             <Text
