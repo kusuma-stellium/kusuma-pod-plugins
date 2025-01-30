@@ -154,11 +154,14 @@ sap.ui.define(
          * @see PluginViewController.onBeforeRenderingPlugin()
          */
         onBeforeRenderingPlugin: function () {
+       this.subscribe('phaseSelectionEvent', this.getRecipesdata, this);
           this.subscribe('phaseSelectionEvent', this.getActivityConfirmationPluginData, this);
           this.subscribe('refreshPhaseList', this.handleYieldOrScrapReported, this);
-
+          
           this.subscribe('phaseSelectionEvent', this.getQuantityConfirmationData, this);
+
           this.subscribe('plantChan');
+          // this.publish('requestForPhaseData', this);
           this.publish('requestForPhaseData', this);
           this.publish('refreshOrderQtyForAutoGR', this);
           this.podType = this.getPodSelectionModel().getPodType();
@@ -175,7 +178,41 @@ sap.ui.define(
 
           //  this._setShowFooterToolbar();
         },
-
+        getRecipesdata: function () {
+          var that = this;
+          var oReportButton = this.byId('Report');
+          var sRecipeType = 'SHOP_ORDER'
+          var sUrl = this.getPublicApiRestDataSourceUri() + '/recipe/v1/recipes';
+          var oParamters = {
+            plant: this.getPodController().getUserPlant(),
+            recipe: this.selectedOrderData.selectedShopOrder,
+            recipeType: sRecipeType
+          };
+          this.ajaxGetRequest(
+            sUrl,
+            oParamters,
+            function (oResponseData) {
+              var oData = oResponseData;
+              var data = oResponseData[0].phases;
+              oResponseData.forEach(response => {
+                response.phases.forEach(phase => {
+                  if(phase.phaseId === that.selectedOrderData.stepId){
+                  if (phase.controlKey.controlKey == "ZN01") {
+                    oReportButton.setEnabled(false);
+                  }
+                  else{
+                    oReportButton.setEnabled(true);
+                  }
+                }
+                });
+              });
+            },
+            function (oError, sHttpErrorMessage) {
+              console.error("Error fetching data:", error);
+              //that.handleErrorMessage(oError, sHttpErrorMessage);
+            }
+          );
+        },
         _setShowFooterToolbar: function () {
           var oActivityReportBtn = this.getView().byId('reportButton'),
             oQuantitiesModel = this.getView().getModel('quantitiesModel'),
@@ -221,6 +258,8 @@ sap.ui.define(
             var oData = { selections: oPodSelectionModel.selectedWorklistOperations };
             this.getActivityConfirmationPluginData('', '', oData);
           }
+
+
         },
 
         onAfterRendering: function () { },
@@ -265,12 +304,53 @@ sap.ui.define(
         handleYieldOrScrapReported: function (sChannelId, sEventId, oData) {
           this.yieldOrScrapReported = oData.stepId === this.selectedOrderData.stepId ? true : false;
         },
+ 
+    
 
         getActivityConfirmationPluginData: function (sChannelId, sEventId, oData) {
           this.selectedOrderData = oData;
           //resetting the flag to false when the phase change happens.
           this.yieldOrScrapReported = false;
+          //this.ReceipData(this.selectedOrderData)
           this.getActivityConfirmationPluginSummary(this.selectedOrderData);
+
+          
+        },
+        // ReceipData:function(){
+        //   var oReportButton = this.byId('Report');
+        //   var sRecipeType = 'SHOP_ORDER'
+        //   var sUrl = this.getPublicApiRestDataSourceUri() + '/recipe/v1/recipes';
+        //   var oParamters = {
+        //     plant: this.getPodController().getUserPlant(),
+        //     recipe: this.selectedOrderData.selectedShopOrder,
+        //     recipeType: sRecipeType
+        //   };
+        //     this.ajaxGetRequest(
+        //     sUrl,
+        //     oParamters,
+        //     function (oResponseData) {
+        //       var oData = oResponseData;
+        //       var data = oResponseData[0].phases;
+        //       oResponseData.forEach(response => {
+        //         response.phases.forEach(phase => {
+        //           if (phase.controlKey.controlKey == "ZN01") {
+        //             oReportButton.setEnabled(false);
+        //           }
+        //           else{
+        //             oReportButton.setEnabled(true);
+        //           }
+        //         });
+        //       });
+        //     },
+        //     function (oError, sHttpErrorMessage) {
+        //       console.error("Error fetching data:", error);
+        //       //that.handleErrorMessage(oError, sHttpErrorMessage);
+        //     }
+        //   );
+        // },
+        handleResourceResponse: function (oResponseData) {
+          var data = oResponseData.recipeSteps;
+          var oReportButton = this.byId('Report');
         },
 
         getActivityConfirmationPluginSummary: function (oData) {
@@ -314,12 +394,13 @@ sap.ui.define(
         postFetchActivityConfirmationPluginData: function (sUrl, oParameters, oData) {
           var oPodSelectionModel = this.getPodSelectionModel();
           var oActivityList = this.byId('activityList');
+          
           var oTitleTextControl = this.byId('titleText');
           if (!oActivityList || !oTitleTextControl || !oPodSelectionModel) {
             // one or more of these can be null in OPA tests
             return;
           }
-          var that = this;
+                   var that = this;
           oActivityList.setBusy(true);
           var userAuthFlag = this.selectedOrderData.userAuthorizedForWorkCenter;
           var phaseStartDate = oData.actualStartDate;
@@ -2313,13 +2394,13 @@ sap.ui.define(
             oScrapInput.setValueState(sap.ui.core.ValueState.None);
           }
 
-          if (totalYieldQuantity >= sfcQuantityValue){
+          if (totalYieldQuantity >= sfcQuantityValue) {
             MessageBox.error("SFC quantity has already been reported");
             oYieldInput.setValueState(sap.ui.core.ValueState.Error);
             oScrapInput.setValueState(sap.ui.core.ValueState.Error);
             return;
-          } else{
-          oYieldInput.setValueState(sap.ui.core.ValueState.None);
+          } else {
+            oYieldInput.setValueState(sap.ui.core.ValueState.None);
             oScrapInput.setValueState(sap.ui.core.ValueState.None);
           }
 

@@ -154,6 +154,7 @@ sap.ui.define(
          * @see PluginViewController.onBeforeRenderingPlugin()
          */
         onBeforeRenderingPlugin: function () {
+         this.subscribe('phaseSelectionEvent', this.getRecipesdata, this);
           this.subscribe('phaseSelectionEvent', this.getActivityConfirmationPluginData, this);
           this.subscribe('refreshPhaseList', this.handleYieldOrScrapReported, this);
 
@@ -174,6 +175,42 @@ sap.ui.define(
           }
 
           //  this._setShowFooterToolbar();
+        },
+
+        getRecipesdata: function () {
+          var that = this;
+          var oReportButton = this.byId('Report');
+          var sRecipeType = 'SHOP_ORDER'
+          var sUrl = this.getPublicApiRestDataSourceUri() + '/recipe/v1/recipes';
+          var oParamters = {
+            plant: this.getPodController().getUserPlant(),
+            recipe: this.selectedOrderData.selectedShopOrder,
+            recipeType: sRecipeType
+          };
+          this.ajaxGetRequest(
+            sUrl,
+            oParamters,
+            function (oResponseData) {
+              var oData = oResponseData;
+              var data = oResponseData[0].phases;
+              oResponseData.forEach(response => {
+                response.phases.forEach(phase => {
+                  if(phase.phaseId === that.selectedOrderData.stepId){
+                  if (phase.controlKey.controlKey == "ZN01") {
+                    oReportButton.setEnabled(false);
+                  }
+                  else{
+                    oReportButton.setEnabled(true);
+                  }
+                }
+                });
+              });
+            },
+            function (oError, sHttpErrorMessage) {
+              console.error("Error fetching data:", error);
+              //that.handleErrorMessage(oError, sHttpErrorMessage);
+            }
+          );
         },
 
         _setShowFooterToolbar: function () {
@@ -2144,6 +2181,8 @@ sap.ui.define(
 
           console.log("Updated the corresponding fields and set them to non-editable.");
         },
+     
+        
 
         onYieldQuantityLiveChange: function (oEvent) {
           var oView = this.getView(),
@@ -2203,13 +2242,14 @@ sap.ui.define(
             var oUpdateInput = aCells[1];
             oUpdateInput.setEditable(true);// Assuming the 3rd column has the input for result
             var totalqty = this.getPodSelectionModel().selectedOrderData.sfcPlannedQty
-
+            var oScrap = this.byId("scrapQuantity");
+            var fscrapValue = parseFloat(oScrap.getValue()) || 0;
             var fYieldValue = parseFloat(oInput.getValue()) || 0;
             var fStandardValue = oData[i].targetQuantity.value;
 
-            if (!isNaN(fStandardValue) && fYieldValue !== 0) {
+            if (!isNaN(fStandardValue)) {
               var oconvertstvalue = fStandardValue * 60;
-              var fResult = (oconvertstvalue / totalqty) * fYieldValue;
+              var fResult = (oconvertstvalue / totalqty) * (fYieldValue + fscrapValue);
               var converttounit = fResult / 60;
               oUpdateInput.setValue(converttounit.toFixed(2)); // Display result with 2 decimal places
               //oUpdateInput.setEditable(false); // Make it non-editable after update
@@ -2268,7 +2308,77 @@ sap.ui.define(
           var oView = this.getView(),
             oPostModel = oView.getModel('qtyPostModel'),
             value = oEvent.getSource().getValue();
-
+            var oInput = this.byId("yieldQuantity");
+            var oItem = oInput.getParent();
+            var oTable = this.byId("activity");
+            var aItems = oTable.getItems();
+             // Get the index of the current item
+             var iIndex = oTable.indexOfItem(oItem);
+             var oData = oTable.getModel().getData().activitySummary;
+             var that = this,
+             sUrl = this.getPublicApiRestDataSourceUri() + 'user/v1/supervisors'
+ 
+           var oParameters = {
+             plant: this.getPodController().getUserPlant(),
+             userId: this.getGlobalProperty('loggedInUserDetails').userId
+           };
+           this.ajaxGetRequest(
+             sUrl,
+             oParameters,
+             function (oResponseData) {
+               if (oResponseData.supervisedUserIds.length === 0) {
+ 
+                 for (var i = 0; i < aItems.length; i++) {
+                   var oRow = aItems[i];
+                   var aCells = oRow.getCells();
+                   var oUpdateInput = aCells[1];
+                   oUpdateInput.setEditable(false);
+                 }
+               }
+               else {
+                 for (var i = 0; i < aItems.length; i++) {
+                   var oRow = aItems[i];
+                   var aCells = oRow.getCells();
+                   var oUpdateInput = aCells[1];
+                   oUpdateInput.setEditable(true);
+                 }
+               }
+ 
+             },
+             function (oError, sHttpErrorMessage) {
+               console.error("Error fetching data:", error);
+               //that.handleErrorMessage(oError, sHttpErrorMessage);
+             }
+           );
+             // Loop through table items
+             for (var i = 0; i < aItems.length; i++) {
+               var oRow = aItems[i];
+               var aCells = oRow.getCells();
+               var oYieldInput = aCells[0];
+               var oUpdateInput = aCells[1];
+               oUpdateInput.setEditable(true);// Assuming the 3rd column has the input for result
+               var totalqty = this.getPodSelectionModel().selectedOrderData.sfcPlannedQty
+               var oScrap = this.byId("scrapQuantity");
+               var fscrapValue = parseFloat(oScrap.getValue()) || 0;
+               var fYieldValue = parseFloat(oInput.getValue()) || 0;
+               var fStandardValue = oData[i].targetQuantity.value;
+   
+               if (!isNaN(fStandardValue)) {
+                 var oconvertstvalue = fStandardValue * 60;
+                 var fResult = (oconvertstvalue / totalqty) * (fYieldValue + fscrapValue);
+                 var converttounit = fResult / 60;
+                 oUpdateInput.setValue(converttounit.toFixed(2)); // Display result with 2 decimal places
+                 //oUpdateInput.setEditable(false); // Make it non-editable after update
+   
+   
+               } else {
+                 // Handle invalid or zero yield value
+                 oUpdateInput.setValue(""); // Clear the result if yield is not valid
+                 oUpdateInput.setEditable(true);
+               }
+   
+   
+             }
           if (Number.isNaN(value) || (value && !this._validatePositiveNumber(value)) || parseFloat(value) === 0) {
             ErrorHandler.setErrorState(oEvent.getSource(), this.getI18nText('POSITIVE_INPUT'));
           } else {

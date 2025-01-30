@@ -44,7 +44,7 @@
             </Table> -->
             <Toolbar>
                 <ToolbarSpacer />
-                <Button tooltip="{i18n>report.quantity}" text="Report" press="onOpenReportQuantityDialog"
+                <Button tooltip="{i18n>report.quantity}" id="Report" text="Report" press="onOpenReportQuantityDialog"
                     type="Emphasized" />
             </Toolbar>
             <Table id="postingsTable" autoPopinMode="true" inset="false" sticky="HeaderToolbar,ColumnHeaders"

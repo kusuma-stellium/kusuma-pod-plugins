@@ -30,7 +30,7 @@
                 <!-- <Input id="scrapQuantity" textAlign="Right"
                     value="{formatOptions : { parseAsString : true, strictGroupingValidation : true },parts:[{path:'qtyPostModel>/scrapQuantity/value'},{path:'qtyPostModel>/scrapQuantity/unitOfMeasure/uom'}], type:'.types.quantity'}"
                     liveChange="onQuantityLiveChange" /> -->
-                <Input id="scrapQuantity" textAlign="Right" value="{qtyPostModel>/scrapQuantity/value}"
+                <Input id="scrapQuantity"  textAlign="Right" value="{qtyPostModel>/scrapQuantity/value}"
                     liveChange="onScrapQuantityLiveChange" />
                 <Select id="uomScrap" items="{unitModel>/}" change="selectUom($event, 'scrapQuantity')"
                     selectedKey="{qtyPostModel>/scrapQuantity/unitOfMeasure/uom}" enabled="true">
