@@ -118,7 +118,7 @@
                 </ColumnListItem>
             </items>
         </Table>
-        <CheckBox id="finalConfirmation" text="{i18n>yieldQtyData.finalConfirmation}">
+        <CheckBox id="finalConfirmation" text="{i18n>yieldQtyData.finalConfirmation}" select=".onFinalConfirmationSelectionChange">
             <layoutData>
                 <l:GridData indentL="10" indentM="10" />
             </layoutData>

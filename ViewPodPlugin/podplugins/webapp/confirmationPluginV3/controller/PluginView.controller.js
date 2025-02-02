@@ -104,6 +104,10 @@ sap.ui.define(
             finalConfirmation: false
           };
 
+          this.batchCorrection = {
+            content: []
+          }
+
           this.page = 0;
           const TablePersonalizeService = {
             oData: {
@@ -175,56 +179,163 @@ sap.ui.define(
             this.publish('requestForPhaseData', this);
           }
 
+          this._getParkedOrBatchCorrectionItems();
+
           //  this._setShowFooterToolbar();
         },
-        getFinalconfirmationvalidation: function () {
-          var sUrl = this.getPodController().getAssemblyDataSourceUri() + 'order/goodsIssue/summary';
-          var oPhaseData = this.getPodSelectionModel().selectedPhaseData;
 
+        _getGoodsIssueSummary: function() {
+          var sUrl = this.getPodController().getAssemblyDataSourceUri() + 'order/goodsIssue/summary';
           var oParams = {
             shopOrder: this.selectedOrderData.selectedShopOrder,
             batchId: this.selectedOrderData.selectedSfc,
             operationActivity: this.getPodSelectionModel().operations[0].operation,
             stepId: this.selectedOrderData.truncatedPhaseId
           };
+          return new Promise((resolve, reject) => this.ajaxGetRequest(sUrl, oParams, resolve, reject));
+        },
+  
+        _getApprovedBatchCorrection: function() {
+          var sUrl =
+            this.getPublicApiRestDataSourceUri() +
+            '/pe/api/v1/process/processDefinitions/start?key=REG_04527345-c48f-44c1-9424-5b65503c18ed&async=false';
+          var oSelection = this.getPodSelectionModel().getSelection();
+          var oParams = {
+            order: oSelection.getShopOrder().shopOrder,
+            sfc: oSelection.getSfc()
+          };
+          return new Promise((resolve, reject) => this.ajaxPostRequest(sUrl, oParams, resolve, reject));
+        },
+  
+        /**
+         * Checks if there are any parked or batch correction items based on tolerance values.
+         *
+         * This function retrieves approved batch corrections and goods issue summary, 
+         * then filters the line items based on their consumed quantity falling within 
+         * tolerance limits.
+         *
+         * @returns {Promise<boolean>} A promise that resolves to `true` if correction items are present, otherwise `false`.
+         */
+        _hasParkedOrBatchCorrectionItems: async function() {
+          return this._getParkedOrBatchCorrectionItems().then(aItems=>{
+            return aItems.length > 0;
+          })
+        },
 
-          new Promise((resolve, reject) => {
-            this.ajaxGetRequest(
-              sUrl,
-              oParams,
-              function (oResponseData) {
-                var aLineItems = oResponseData.lineItems;
+        _getParkedOrBatchCorrectionItems:  async function(){
+          return Promise.allSettled([
+            this._getApprovedBatchCorrection(),
+            this._getGoodsIssueSummary()
+          ]).then((aValues) => {
 
-                if (!aLineItems || aLineItems.length === 0) {
-                  resolve(true); // No line items found, consider no corrections needed.
-                } else {
-                  var oCorrItem = aLineItems.find(oItem => {
-                    return oItem.consumedQuantity.value < oItem.targetQuantity.value || oItem.consumedQuantity.value > oItem.targetQuantity.value;
-                  });
+            if(aValues[0].status === 'fulfilled'){
+              this.batchCorrection = aValues[0].value
+            }
 
-                  if (oCorrItem) {
-                    MessageBox.error("Final confirmation is not allowed for phase with PARKED components");
-                    resolve(false);
-                    return;
-                  } else {
-                    this.reportQuantity();
-                    this.reportActivity();
-                    resolve(true);
-                  }
-                }
-              },
-              function (oError, sHttpErrorMessage) {
-                console.error("Error fetching data:", oError);
-                reject(sHttpErrorMessage);
+            if(this.batchCorrection.content && this.batchCorrection.content.length > 0){
+              this.byId('idApprovedQtyTitle').setText(this.getI18nText('approvedGRQtyTitle', [this.batchCorrection.content[0].approvedQuantity]));
+            }else{
+              this.byId('idApprovedQtyTitle').setText('')
+            }
+
+            var oBatchCorrection = this.batchCorrection;
+            var oGiSummary = aValues[1].value;
+
+            var fToleranceUpper = 0,
+              fToleranceLower = 0;
+  
+            var aItems = oGiSummary.lineItems.filter(oItem => {
+              var oCorrItem = oBatchCorrection.content.find(val => val.component === oItem.materialId.material);
+              /* 
+              * Fallback logic for tolerance during validation
+              *   In case of batch correction, use approved batch correction tolerance
+              *   In case recipe tolerances are available, use that for validation
+              *   In case bom tolerances are available, use that for validation
+              *   In case no tolerance data is available, the consumed qty will be compared with the target quantity
+              */
+              if (oCorrItem) {
+                fToleranceUpper = oCorrItem.approvedTUpper;
+                fToleranceLower = oCorrItem.approvedTLower;
+              } else if (oItem.recipeComponentToleranceOver && oItem.recipeComponentToleranceUnder) {
+                fToleranceUpper = oItem.recipeComponentToleranceOver;
+                fToleranceLower = oItem.recipeComponentToleranceUnder;
+              } else if (oItem.toleranceOver && oItem.toleranceUnder) {
+                fToleranceUpper = oItem.toleranceOver;
+                fToleranceLower = oItem.toleranceUnder;
+              } else {
+                fToleranceUpper = oItem.targetQuantity.value;
+                fToleranceLower = oItem.targetQuantity.value;
               }
-            );
-          }).then(function (result) {
-            return result;
-          }).catch(function (error) {
-            console.error("Promise rejected with error:", error);
-            return false;
+  
+              return oItem.consumedQuantity.value < fToleranceUpper || oItem.consumedQuantity.value > fToleranceLower;
+            });
+  
+            //If correction items are present, return true else return false
+            return aItems;
           });
         },
+
+        onFinalConfirmationSelectionChange:function(oEvent){
+          var oControl = oEvent.getSource();
+          if(oControl.getSelected()){
+            this._hasParkedOrBatchCorrectionItems().then(bFlag=>{
+              if(bFlag){
+                MessageBox.error(this.getI18nText('finalConfirmation.parkedOrBatchCorrErrMsg'));
+                oControl.setSelected(false);
+                return;
+              }
+            })
+          }
+        },
+        
+        // getFinalconfirmationvalidation: function () {
+        //   var sUrl = this.getPodController().getAssemblyDataSourceUri() + 'order/goodsIssue/summary';
+        //   var oPhaseData = this.getPodSelectionModel().selectedPhaseData;
+
+        //   var oParams = {
+        //     shopOrder: this.selectedOrderData.selectedShopOrder,
+        //     batchId: this.selectedOrderData.selectedSfc,
+        //     operationActivity: this.getPodSelectionModel().operations[0].operation,
+        //     stepId: this.selectedOrderData.truncatedPhaseId
+        //   };
+
+        //   new Promise((resolve, reject) => {
+        //     this.ajaxGetRequest(
+        //       sUrl,
+        //       oParams,
+        //       function (oResponseData) {
+        //         var aLineItems = oResponseData.lineItems;
+
+        //         if (!aLineItems || aLineItems.length === 0) {
+        //           resolve(true); // No line items found, consider no corrections needed.
+        //         } else {
+        //           var oCorrItem = aLineItems.find(oItem => {
+        //             return oItem.consumedQuantity.value < oItem.targetQuantity.value || oItem.consumedQuantity.value > oItem.targetQuantity.value;
+        //           });
+
+        //           if (oCorrItem) {
+        //             MessageBox.error("Final confirmation is not allowed for phase with PARKED components");
+        //             resolve(false);
+        //             return;
+        //           } else {
+        //             this.reportQuantity();
+        //             this.reportActivity();
+        //             resolve(true);
+        //           }
+        //         }
+        //       },
+        //       function (oError, sHttpErrorMessage) {
+        //         console.error("Error fetching data:", oError);
+        //         reject(sHttpErrorMessage);
+        //       }
+        //     );
+        //   }).then(function (result) {
+        //     return result;
+        //   }).catch(function (error) {
+        //     console.error("Promise rejected with error:", error);
+        //     return false;
+        //   });
+        // },
 
 
         //   getFinalconfirmationvalidation:function(){
@@ -2635,13 +2746,16 @@ sap.ui.define(
           if (this.customFieldJson && this.customFieldJson.length > 0) {
             this.qtyPostData.customFieldData = JSON.stringify(this.customFieldJson);
           }
-          if (this.byId('finalConfirmation').getSelected()) {
-            this.getFinalconfirmationvalidation();
-          } else {
-            this.reportQuantity();
-            this.reportActivity();
+          // if (this.byId('finalConfirmation').getSelected()) {
+          //   this.getFinalconfirmationvalidation();
+          // } else {
+          //   this.reportQuantity();
+          //   this.reportActivity();
 
-          }
+          // }
+
+          this.reportQuantity();
+          this.reportActivity();
 
           //this.onPressConfirmActivityDialog();
           // var quantityConfirmationModel = this.byId('quantityConfirmationTable').getModel();
