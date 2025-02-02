@@ -158,8 +158,9 @@ sap.ui.define(
          * @see PluginViewController.onBeforeRenderingPlugin()
          */
         onBeforeRenderingPlugin: function () {
-          // this.subscribe('phaseSelectionEvent', this.getFinalconfirmation, this);
+          this.subscribe('phaseSelectionEvent', this.getBatchCorrectionData, this);
           this.subscribe('phaseSelectionEvent', this.getRecipesdata, this);
+          this.subscribe('phaseSelectionEvent', this.getResourcedata, this);
           this.subscribe('phaseSelectionEvent', this.getActivityConfirmationPluginData, this);
           this.subscribe('refreshPhaseList', this.handleYieldOrScrapReported, this);
 
