@@ -618,6 +618,7 @@ sap.ui.define([
                 let sValue = oQuantityInpuCtrl.getValue();
                 oQuantityInpuCtrl.setValueState("Error"); 
 				oQuantityInpuCtrl.setValueStateText("GR quantity must be less than or equal to Yield quantity");
+                grController.oController.byId("grConfirmBtn").setEnabled(false);
 			}else{
                 oQuantityInpuCtrl.setValueState("None"); 
             }

@@ -43,6 +43,7 @@
                 </items>
             </Table> -->
             <Toolbar>
+                <Text  id="TotalQuantity"/>
                 <ToolbarSpacer />
                 <Button tooltip="{i18n>report.quantity}"  id="Report" text="Report" press="onOpenReportQuantityDialog"
                     type="Emphasized" />

@@ -154,8 +154,9 @@ sap.ui.define(
          * @see PluginViewController.onBeforeRenderingPlugin()
          */
         onBeforeRenderingPlugin: function () {
-          // this.subscribe('phaseSelectionEvent', this.getFinalconfirmation, this);
+          this.subscribe('phaseSelectionEvent', this.getBatchCorrectionData, this);
           this.subscribe('phaseSelectionEvent', this.getRecipesdata, this);
+          this.subscribe('phaseSelectionEvent', this.getResourcedata, this);
           this.subscribe('phaseSelectionEvent', this.getActivityConfirmationPluginData, this);
           this.subscribe('refreshPhaseList', this.handleYieldOrScrapReported, this);
 
@@ -176,6 +177,54 @@ sap.ui.define(
           }
 
           //  this._setShowFooterToolbar();
+        },
+        getResourcedata: function () {
+          var sUrl = this.getPublicApiRestDataSourceUri() + '/resource/v2/resources';
+          var oParamters = {
+            plant: this.getPodController().getUserPlant()
+          };
+          this.ajaxGetRequest(
+            sUrl,
+            oParamters,
+            function (oResponseData) {
+              var oData = oResponseData;
+
+            },
+            function (oError, sHttpErrorMessage) {
+              console.error("Error fetching data:", error);
+              //that.handleErrorMessage(oError, sHttpErrorMessage);
+            }
+          );
+        },
+
+        getBatchCorrectionData: function () {
+          var that = this;
+          var sUrl =
+            this.getPublicApiRestDataSourceUri() +
+            '/pe/api/v1/process/processDefinitions/start?key=REG_04527345-c48f-44c1-9424-5b65503c18ed&async=false';
+          var oSelection = this.getPodSelectionModel().getSelection();
+          var oParams = {
+            order: oSelection.getShopOrder().shopOrder,
+            sfc: oSelection.getSfc()
+          };
+          // return new Promise((resolve, reject) => {
+          //   this.ajaxPostRequest(sUrl, oParams, resolve, reject);
+          // });
+          this.ajaxPostRequest(
+            sUrl,
+            oParams,
+            function (oResponseData) {
+              var oData = oResponseData.content;
+              if (oData.length !== 0) {
+                var totalGRQuantity = "Approved Correction GR Quantity: " + oData[0].grQty + " " + oData[0].grUom;
+                that.byId("TotalQuantity").setText(totalGRQuantity)
+              }
+            },
+            function (oError, sHttpErrorMessage) {
+              console.error("Error fetching data:", error);
+              //that.handleErrorMessage(oError, sHttpErrorMessage);
+            }
+          );
         },
         getFinalconfirmationvalidation: function () {
           var sUrl = this.getPodController().getAssemblyDataSourceUri() + 'order/goodsIssue/summary';
@@ -198,10 +247,19 @@ sap.ui.define(
                 if (!aLineItems || aLineItems.length === 0) {
                   resolve(true); // No line items found, consider no corrections needed.
                 } else {
-                  var oCorrItem = aLineItems.find(oItem => {
-                    return oItem.consumedQuantity.value < oItem.targetQuantity.value || oItem.consumedQuantity.value > oItem.targetQuantity.value;
-                  });
 
+                  var oCorrItem = aLineItems.find(oItem => {
+                    if (oItem.recipeComponentToleranceOver && oItem.recipeComponentToleranceUnder) {
+
+                      return oItem.recipeComponentToleranceOver < oItem.targetQuantity.value || oItem.recipeComponentToleranceUnder > oItem.targetQuantity.value;
+
+                    } else if (oItem.ToleranceOver && oItem.ToleranceUnder) {
+                      return oItem.ToleranceOver < oItem.targetQuantity.value || oItem.ToleranceUnder > oItem.targetQuantity.value;
+                    } else {
+                      return oItem.consumedQuantity.value < oItem.targetQuantity.value || oItem.consumedQuantity.value > oItem.targetQuantity.value;
+                    }
+                    //  return oItem.consumedQuantity.value < oItem.targetQuantity.value || oItem.consumedQuantity.value > oItem.targetQuantity.value;
+                  });
                   if (oCorrItem) {
                     MessageBox.error("Final confirmation is not allowed for phase with PARKED components");
                     resolve(false);
