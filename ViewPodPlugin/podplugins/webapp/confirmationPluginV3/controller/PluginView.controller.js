@@ -158,9 +158,10 @@ sap.ui.define(
          * @see PluginViewController.onBeforeRenderingPlugin()
          */
         onBeforeRenderingPlugin: function () {
+          this.subscribe('phaseSelectionEvent', this._getParkedOrBatchCorrectionItems, this);
           this.subscribe('phaseSelectionEvent', this.getBatchCorrectionData, this);
           this.subscribe('phaseSelectionEvent', this.getRecipesdata, this);
-          this.subscribe('phaseSelectionEvent', this.getResourcedata, this);
+          this.subscribe('phaseSelectionEvent', this.ResourceStatus, this);
           this.subscribe('phaseSelectionEvent', this.getActivityConfirmationPluginData, this);
           this.subscribe('refreshPhaseList', this.handleYieldOrScrapReported, this);
 
@@ -174,6 +175,7 @@ sap.ui.define(
             this.subscribe('OperationListSelectEvent', this.onOperationSelected, this);
             this.publish('phaseSelectionEventWIList', this);
           }
+
           //Order POD event for Process Order
           if (this.getPodSelectionModel().getPodType() === 'ORDER') {
             this.subscribe('phaseSelectionEvent', this.onPhaseSelected, this);
@@ -184,8 +186,54 @@ sap.ui.define(
 
           //  this._setShowFooterToolbar();
         },
+        ResourceStatus: function () {
+          if (!this._validateResourceStatus(this.selectedOrderData.resource.resource)) {
+            MessageBox.error("Resource is not in productive / enabled status");
+            return;
+          }
+        },
 
-        _getGoodsIssueSummary: function() {
+        _validateResourceStatus: function (sResource) {
+          var aValidStatuses = ['PRODUCTIVE', 'ENABLED'];
+          return this._getResourceData(sResource).then(aResource => {
+            if (!aResource || aResource.length < 0) return false;
+            return aResource.find(oResource => aValidStatuses.includes(oResource.status));
+          });
+        },
+
+        _getResourceData: function (sResource) {
+          var sUrl = this.getPublicApiRestDataSourceUri() + '/resource/v2/resources';
+          var oParamters = {
+            plant: this.getPodController().getUserPlant(),
+            resource: sResource
+          };
+
+          return new Promise((resolve, reject) => this.ajaxGetRequest(sUrl, oParamters, resolve, reject));
+        },
+        // getResourcedata: function () {
+        //   var sUrl = this.getPublicApiRestDataSourceUri() + '/resource/v2/resources';
+        //   var oParamters = {
+        //     plant: this.getPodController().getUserPlant()
+        //   };
+        //   // return new Promise((resolve, reject) => {
+        //   //   this.ajaxGetRequest(sUrl, oParamters, resolve, reject);
+        //   // });
+        //   this.ajaxGetRequest(
+        //     sUrl,
+        //     oParamters,
+        //     function (oResponseData) {
+        //       var oData = oResponseData;
+
+        //     },
+        //     function (oError, sHttpErrorMessage) {
+        //       console.error("Error fetching data:", error);
+        //       //that.handleErrorMessage(oError, sHttpErrorMessage);
+        //     }
+        //   );
+
+        // },
+
+        _getGoodsIssueSummary: function () {
           var sUrl = this.getPodController().getAssemblyDataSourceUri() + 'order/goodsIssue/summary';
           var oParams = {
             shopOrder: this.selectedOrderData.selectedShopOrder,
@@ -195,8 +243,8 @@ sap.ui.define(
           };
           return new Promise((resolve, reject) => this.ajaxGetRequest(sUrl, oParams, resolve, reject));
         },
-  
-        _getApprovedBatchCorrection: function() {
+
+        _getApprovedBatchCorrection: function () {
           var sUrl =
             this.getPublicApiRestDataSourceUri() +
             '/pe/api/v1/process/processDefinitions/start?key=REG_04527345-c48f-44c1-9424-5b65503c18ed&async=false';
@@ -207,7 +255,7 @@ sap.ui.define(
           };
           return new Promise((resolve, reject) => this.ajaxPostRequest(sUrl, oParams, resolve, reject));
         },
-  
+
         /**
          * Checks if there are any parked or batch correction items based on tolerance values.
          *
@@ -217,25 +265,25 @@ sap.ui.define(
          *
          * @returns {Promise<boolean>} A promise that resolves to `true` if correction items are present, otherwise `false`.
          */
-        _hasParkedOrBatchCorrectionItems: async function() {
-          return this._getParkedOrBatchCorrectionItems().then(aItems=>{
+        _hasParkedOrBatchCorrectionItems: async function () {
+          return this._getParkedOrBatchCorrectionItems().then(aItems => {
             return aItems.length > 0;
           })
         },
 
-        _getParkedOrBatchCorrectionItems:  async function(){
+        _getParkedOrBatchCorrectionItems: async function () {
           return Promise.allSettled([
             this._getApprovedBatchCorrection(),
             this._getGoodsIssueSummary()
           ]).then((aValues) => {
 
-            if(aValues[0].status === 'fulfilled'){
+            if (aValues[0].status === 'fulfilled') {
               this.batchCorrection = aValues[0].value
             }
 
-            if(this.batchCorrection.content && this.batchCorrection.content.length > 0){
-              this.byId('idApprovedQtyTitle').setText(this.getI18nText('approvedGRQtyTitle', [this.batchCorrection.content[0].approvedQuantity]));
-            }else{
+            if (this.batchCorrection.content && this.batchCorrection.content.length > 0) {
+              this.byId('idApprovedQtyTitle').setText(this.getI18nText('approvedGRQtyTitle', [this.batchCorrection.content[0].grQty]));
+            } else {
               this.byId('idApprovedQtyTitle').setText('')
             }
 
@@ -244,7 +292,7 @@ sap.ui.define(
 
             var fToleranceUpper = 0,
               fToleranceLower = 0;
-  
+
             var aItems = oGiSummary.lineItems.filter(oItem => {
               var oCorrItem = oBatchCorrection.content.find(val => val.component === oItem.materialId.material);
               /* 
@@ -267,20 +315,20 @@ sap.ui.define(
                 fToleranceUpper = oItem.targetQuantity.value;
                 fToleranceLower = oItem.targetQuantity.value;
               }
-  
+
               return oItem.consumedQuantity.value < fToleranceUpper || oItem.consumedQuantity.value > fToleranceLower;
             });
-  
+
             //If correction items are present, return true else return false
             return aItems;
           });
         },
 
-        onFinalConfirmationSelectionChange:function(oEvent){
+        onFinalConfirmationSelectionChange: function (oEvent) {
           var oControl = oEvent.getSource();
-          if(oControl.getSelected()){
-            this._hasParkedOrBatchCorrectionItems().then(bFlag=>{
-              if(bFlag){
+          if (oControl.getSelected()) {
+            this._hasParkedOrBatchCorrectionItems().then(bFlag => {
+              if (bFlag) {
                 MessageBox.error(this.getI18nText('finalConfirmation.parkedOrBatchCorrErrMsg'));
                 oControl.setSelected(false);
                 return;
@@ -288,7 +336,7 @@ sap.ui.define(
             })
           }
         },
-        
+
         // getFinalconfirmationvalidation: function () {
         //   var sUrl = this.getPodController().getAssemblyDataSourceUri() + 'order/goodsIssue/summary';
         //   var oPhaseData = this.getPodSelectionModel().selectedPhaseData;
@@ -2393,6 +2441,11 @@ sap.ui.define(
           var oItem = oInput.getParent();
           var oTable = this.byId("activity");
           var aItems = oTable.getItems();
+          var oYieldInput = this.byId("yieldQuantity");
+          var oScrapInput = this.byId("scrapQuantity");
+
+          oYieldInput.setValueState(sap.ui.core.ValueState.None);
+          oScrapInput.setValueState(sap.ui.core.ValueState.None);
 
           var oData = oTable.getModel().getData().activitySummary;
 
@@ -2513,6 +2566,11 @@ sap.ui.define(
           var oItem = oInput.getParent();
           var oTable = this.byId("activity");
           var aItems = oTable.getItems();
+          var oYieldInput = this.byId("yieldQuantity");
+          var oScrapInput = this.byId("scrapQuantity");
+
+          oYieldInput.setValueState(sap.ui.core.ValueState.None);
+          oScrapInput.setValueState(sap.ui.core.ValueState.None);
           // Get the index of the current item
           var iIndex = oTable.indexOfItem(oItem);
           var oData = oTable.getModel().getData().activitySummary;
@@ -2642,10 +2700,15 @@ sap.ui.define(
           }
           var oYieldInput = this.byId("yieldQuantity");
           var oScrapInput = this.byId("scrapQuantity");
+          
+            
 
+          if (this.batchCorrection.content && this.batchCorrection.content.length > 0){
+            var oSfcQuantityInput = this.batchCorrection.content[0].grQty
+          }else{
           //  var oSfcQuantityInput = this.getPodSelectionModel().selectedOrderData.plannedQty
           var oSfcQuantityInput = this.getPodSelectionModel().selectedOrderData.sfcPlannedQty
-
+          }
           var yieldValue = parseFloat(oYieldInput.getValue()) || 0;
           var scrapValue = parseFloat(oScrapInput.getValue()) || 0;
           var sfcQuantityValue = parseFloat(oSfcQuantityInput) || 0;

@@ -29,18 +29,21 @@ sap.ui.define([
     let sFormulaProperty = "/formula";
     let POSTING_CUMSTOM_FIELD = "customDataField";
     let POST_CUSTOM_FIELD_ID = "customField1";
+    this.batchCorrection = {
+        content: []
+    }
 
     const oDecimalConstraints = NumberFormatter.dmcLocaleDecimalConstraints();
     oDecimalConstraints.scale = 3;
     oDecimalConstraints.minimum = '0.001';
     oDecimalConstraints.nullable = false;
     return {
-        types : {
+        types: {
             quantity: new sap.ui.model.odata.type.Decimal({
                 strictGroupingValidation: true
             }, oDecimalConstraints),
             plantdate: new PlantDateType()
-		},
+        },
         oBatchControl: BatchControl,
         oDateTimeUtils: DateTimeUtils,
         oNumberFormatter: NumberFormatter,
@@ -108,11 +111,11 @@ sap.ui.define([
 
             this.isCustomFieldValid = true;
             this.oController.getView().setModel(new JSONModel({
-                dmcDateTimePickerValueFormat : DateTimeUtils.dmcDateValueFormat()
+                dmcDateTimePickerValueFormat: DateTimeUtils.dmcDateValueFormat()
             }), "dmcDateTimePickerValueFormatModel");
         },
 
-        concatenateQuantityAndUnitOfMeasure: function(sQty, sUom) {
+        concatenateQuantityAndUnitOfMeasure: function (sQty, sUom) {
             let sFormattedQty = NumberFormatter.dmcLocaleFloatNumberFormatter(sQty, sUom);
             if (sUom && sFormattedQty !== "") {
                 return sFormattedQty + " " + sUom;
@@ -123,7 +126,7 @@ sap.ui.define([
             }
         },
 
-        formatCancellationStatus: function(sStatusKey) {
+        formatCancellationStatus: function (sStatusKey) {
             const sPostedKey = "enum.status.posted";
             const sCanceledkey = "enum.status.canceled";
             let oStatus = {
@@ -141,6 +144,47 @@ sap.ui.define([
         _updateSettingModel: function (bGrConfirmBtnEnable) {
             let oSettingsModel = this.oController.getView().getModel("settingsModel");
             oSettingsModel.setProperty("/grConfirmBtnEnable", bGrConfirmBtnEnable);
+        },
+        // ResourceStatus: function () {
+        //     if (!this._validateResourceStatus(this.selectedOrderData.resource.resource)) {
+        //       MessageBox.error("Resource is not in productive / enabled status");
+        //       return;
+        //     }
+        //   },
+        _hasParkedOrBatchCorrectionItems: async function () {
+            return this._getApprovedBatchCorrection().then(aItems => {
+                this.batchCorrection = aItems;
+                return aItems.length > 0;
+            })
+        },
+
+        _getApprovedBatchCorrection: function () {
+            var sUrl =
+                this.oController.getPublicApiRestDataSourceUri() +
+                '/pe/api/v1/process/processDefinitions/start?key=REG_04527345-c48f-44c1-9424-5b65503c18ed&async=false';
+            // var oSelection = this.getPodSelectionModel().getSelection();
+            var oParams = {
+                order: this.selectedOrderData.order,
+                sfc: this.selectedOrderData.sfc
+            };
+            return new Promise((resolve, reject) => this.oController.ajaxPostRequest(sUrl, oParams, resolve, reject));
+        },
+        _validateResourceStatus: function (sResource) {
+            var aValidStatuses = ['PRODUCTIVE', 'ENABLED'];
+            return this._getResourceData(sResource).then(aResource => {
+                if (!aResource || aResource.length < 0) return false;
+                return aResource.find(oResource => aValidStatuses.includes(oResource.status));
+            });
+        },
+
+        _getResourceData: function (sResource) {
+            var sUrl = this.getPublicApiRestDataSourceUri() + '/resource/v2/resources';
+            var oParamters = {
+                plant: this.getPodController().getUserPlant(),
+                resource: sResource
+            };
+
+            return new Promise((resolve, reject) => this.ajaxGetRequest(sUrl, oParamters, resolve, reject));
         },
         /**
          * @param {*} oData
@@ -240,12 +284,12 @@ sap.ui.define([
             }
         },
 
-        _getPPEndpointUrl: function(oConfig) {
+        _getPPEndpointUrl: function (oConfig) {
             let sUrl = null;
             if (oConfig.huPPTriggerEndPoint) {
                 sUrl = oConfig.huPPTriggerEndPoint;
             }
-            if ( sUrl && sUrl.indexOf("api/v1/process") >= 0) {
+            if (sUrl && sUrl.indexOf("api/v1/process") >= 0) {
                 let sApiPath = sUrl.substring(sUrl.indexOf("api/v1/process"));
                 let sUri = this.oController.getPeRestDataSourceUri();
                 sUrl = sUri + sApiPath;
@@ -296,7 +340,7 @@ sap.ui.define([
             }
         },
 
-        _generateHuFromPP: function() {
+        _generateHuFromPP: function () {
             const grController = this.GRPostController || this;
             const oView = this.oController.getView();
             let oConfig = this.oController.getConfiguration();
@@ -309,7 +353,7 @@ sap.ui.define([
                 sfc: oPostData.batchId,
                 order: oPostData.shopOrder,
                 material: oPostData.material,
-                materialVersion: oPostData.materialVersion, 
+                materialVersion: oPostData.materialVersion,
                 batchNumber: oPostData.batchNumber,
                 storageLocation: oPostData.storageLocation,
                 receivedQuantityValue: oPostData.receivedQuantity && oPostData.receivedQuantity.value,
@@ -342,7 +386,7 @@ sap.ui.define([
             );
         },
 
-        dmcDateToUTCWithoutMillisecondFormat: function (date){
+        dmcDateToUTCWithoutMillisecondFormat: function (date) {
             let result = "";
             const timezoneInternal = PlantSettings.getTimeZone();
             const sFormattedDate = moment(date).locale("en").format("yyyy-MM-DD HH:mm:ss");
@@ -362,10 +406,10 @@ sap.ui.define([
                     plant: PlantSettings.getCurrentPlant(),
                     eventName: "PACKING_UNIT_NUMBER",
                     objectsToMatch: {
-                          PLANT: PlantSettings.getCurrentPlant(),
-                          ORDER_NAME: this.selectedOrderData.order,
-                          SFC: this.selectedOrderData.sfc,
-                          WORK_CENTER: this.selectedOrderData.workcenter
+                        PLANT: PlantSettings.getCurrentPlant(),
+                        ORDER_NAME: this.selectedOrderData.order,
+                        SFC: this.selectedOrderData.sfc,
+                        WORK_CENTER: this.selectedOrderData.workcenter
                     }
                 };
                 oView.setBusy(true);
@@ -387,7 +431,7 @@ sap.ui.define([
             }
         },
 
-        _grDialogOpenCallBack: function(sType) {
+        _grDialogOpenCallBack: function (sType) {
             let oView = this.oController.getView();
             let oPostModel = oView.getModel("postModel");
             oPostModel.setProperty("/dateTime", this.getCurrentDateTimeInPlantTimeZone());
@@ -398,7 +442,7 @@ sap.ui.define([
             }
         },
 
-        _getProposeBatchNumber: function() {
+        _getProposeBatchNumber: function () {
             let grController = this.GRPostController || this;
             let mainController = grController.oController;
             let inventoryUrl = mainController.getInventoryDataSourceUri();
@@ -411,11 +455,11 @@ sap.ui.define([
             };
             $.ajaxSettings.async = false;
             AjaxUtil.get(sUrl, oPayload, this._getProposeBatchNumberSuccessCallback.bind(this),
-             this._getProposeBatchNumberErrorCallback.bind(this));
+                this._getProposeBatchNumberErrorCallback.bind(this));
             $.ajaxSettings.async = true;
         },
 
-        _getProposeBatchNumberSuccessCallback: function(oResponseData) {
+        _getProposeBatchNumberSuccessCallback: function (oResponseData) {
             let oView = this.oController.getView();
             let oPostModel = oView.getModel("postModel");
             oPostModel.setProperty(sBatchNumberProperty, oResponseData.batchNumber);
@@ -429,29 +473,29 @@ sap.ui.define([
             oPostModel.setProperty(sBatchNumberProperty, null);
         },
 
-        _createPostDialogCustomField: function() {
-            if(this.oController.oPluginConfiguration && this.oController.oPluginConfiguration.customField1){
+        _createPostDialogCustomField: function () {
+            if (this.oController.oPluginConfiguration && this.oController.oPluginConfiguration.customField1) {
                 let grController = this.GRPostController || this; // if this is controller.js, get GRPostController, else . return this;
                 let oPluginConfiguration = this.oController.oPluginConfiguration;
-				let customFieldLabel1 = new sap.m.Label("customFieldLabel1", {text: oPluginConfiguration.customField1});
-				let customFieldValue1 = new sap.m.Input(POST_CUSTOM_FIELD_ID, {
-                                                        value: "",
-                                                        valueLiveUpdate: true,
-                                                        liveChange: grController.onCustomFieldLiveChange.bind(grController)
-                                                    });
-				this.oController.byId("postGoodsReceiptForm").addContent(customFieldLabel1);
-				this.oController.byId("postGoodsReceiptForm").addContent(customFieldValue1);
-			}
+                let customFieldLabel1 = new sap.m.Label("customFieldLabel1", { text: oPluginConfiguration.customField1 });
+                let customFieldValue1 = new sap.m.Input(POST_CUSTOM_FIELD_ID, {
+                    value: "",
+                    valueLiveUpdate: true,
+                    liveChange: grController.onCustomFieldLiveChange.bind(grController)
+                });
+                this.oController.byId("postGoodsReceiptForm").addContent(customFieldLabel1);
+                this.oController.byId("postGoodsReceiptForm").addContent(customFieldValue1);
+            }
         },
 
         getCurrentDateInPlantTimeZone: function () {
-            let dDate = new Date().toLocaleString("en-US", {timeZone: PlantSettings.getTimeZone()});
+            let dDate = new Date().toLocaleString("en-US", { timeZone: PlantSettings.getTimeZone() });
             let dStartToday = DateTimeUtils.dmcDateTimeStartOf(dDate, "day");
             return moment(dStartToday).format("YYYY-MM-DD");
         },
 
         getCurrentDateTimeInPlantTimeZone: function () {
-            let dDate = new Date().toLocaleString("en-US", {timeZone: PlantSettings.getTimeZone()});
+            let dDate = new Date().toLocaleString("en-US", { timeZone: PlantSettings.getTimeZone() });
             let dDateTime = DateTimeUtils.dmcDateTimeStartOf(dDate);
             return moment(dDateTime).format("MMM DD,yyyy, hh:mm:ss a");
         },
@@ -544,9 +588,9 @@ sap.ui.define([
             grController.postGrData(sUrl, oPayload);
         },
 
-        _buildCustomFieldData: function() {
+        _buildCustomFieldData: function () {
             let aFiledData = [];
-            if(this.oController.oPluginConfiguration && this.oController.oPluginConfiguration.customField1){
+            if (this.oController.oPluginConfiguration && this.oController.oPluginConfiguration.customField1) {
                 if (sap.ui.getCore().byId(POST_CUSTOM_FIELD_ID).getValue()) {
                     aFiledData.push({
                         "id": POST_CUSTOM_FIELD_ID,
@@ -578,7 +622,7 @@ sap.ui.define([
             this.isBatchNumberValid = false;
             this.isHandlingUnitNumberValid = false;
 
-            if(mainController.oPluginConfiguration && mainController.oPluginConfiguration.customField1){
+            if (mainController.oPluginConfiguration && mainController.oPluginConfiguration.customField1) {
                 sap.ui.getCore().byId(POST_CUSTOM_FIELD_ID).setValue("");
             }
 
@@ -600,39 +644,114 @@ sap.ui.define([
          */
         onQuantityChange: function (oEvent) {
             let that = this.GRPostController || this;
-            
-            let oSetTimeOut = setTimeout(function() {
+
+            let oSetTimeOut = setTimeout(function () {
                 that.handleValideQuantity();
                 clearTimeout(oSetTimeOut);
             }, 500);
         },
+        checkParkedOrBatchCorrectionItems: async function () {
 
-        handleValideQuantity: function() {
+            const result = await this._hasParkedOrBatchCorrectionItems();
+
+
+        },
+
+        quantityConfirmation: function (phase) {
+            checkParkedOrBatchCorrectionItems.call(this);
+            //this._hasParkedOrBatchCorrectionItems()
+
+            var that = this;
+            var productionUrl = this.oController.getProductionDataSourceUri();
+            var oParameters = {};
+            oParameters.shopOrder = this.selectedOrderData.order;
+            oParameters.batchId = this.selectedOrderData.sfc;
+            oParameters.phase = phase.recipeOperation.operationActivity.operationActivity;
+
+            this.oParameters = oParameters;
+            var sUrl = productionUrl + 'quantityConfirmation/summary';
+            this.oController.ajaxGetRequest(
+                sUrl,
+                oParameters,
+                function (oResponseData) {
+
+                    let oQuantityInpuCtrl = that.oController.byId("quantity");
+                    let sValue = parseInt(oQuantityInpuCtrl.getValue());
+                    if (that.batchCorrection.content && that.batchCorrection.content.length > 0) {
+                        var totalyeild = that.batchCorrection.content[0].grQty
+                    } else {
+                        var totalyeild = oResponseData.totalYieldQuantity.value;
+                    }
+
+                    var lineItems = that.oController.grModel.oData.lineItems
+                    for (let i = 0; i < lineItems.length; i++) {
+                        if (lineItems[i].type == "N") {
+                            if (sValue >= totalyeild) {
+
+                                oQuantityInpuCtrl.setValueState("Error");
+                                oQuantityInpuCtrl.setValueStateText("GR quantity must be less than or equal to Yield quantity");
+                                that.oController.byId("grConfirmBtn").setEnabled(false);
+                                return;
+                            } else {
+                                oQuantityInpuCtrl.setValueState("None");
+                            }
+
+                        }
+                    }
+
+                },
+                function (oError, oHttpErrorMessage) {
+                    var err = oError ? oError : oHttpErrorMessage;
+                    that.showErrorMessage(err, true, true);
+
+                }
+            );
+        },
+
+        handleValideQuantity: function () {
             let grController = this.GRPostController || this; // if this is controller.js, get GRPostController, else . return this;
             let oPostModel = grController.oController.getView().getModel("postModel");
             let oQuantityInpuCtrl = grController.oController.byId("quantity");
             let bValidate = oQuantityInpuCtrl.getValueState() !== "Error";
             let sValue = oQuantityInpuCtrl.getValue();
             let yieldQuantity = oPostModel.oData.targetQuantity.value
-			if(sValue > yieldQuantity ){
-                let sValue = oQuantityInpuCtrl.getValue();
-                oQuantityInpuCtrl.setValueState("Error"); 
-				oQuantityInpuCtrl.setValueStateText("GR quantity must be less than or equal to Yield quantity");
-                grController.oController.byId("grConfirmBtn").setEnabled(false);
-			}else{
-                oQuantityInpuCtrl.setValueState("None"); 
-            }
+            var that = this;
+            //var oReportButton = this.byId('Report');
+            var sRecipeType = 'SHOP_ORDER'
+            var sUrl = this.oController.getPublicApiRestDataSourceUri() + '/recipe/v1/recipes';
+            var oParamters = {
+                plant: this.oController.getPodController().getUserPlant(),
+                recipe: this.selectedOrderData.order,
+                recipeType: sRecipeType
+            };
+            this.oController.ajaxGetRequest(
+                sUrl,
+                oParamters,
+                function (oResponseData) {
+                    var oData = oResponseData;
+                    var data = oResponseData[0].phases;
+                    var lastPhase = data[data.length - 1];
+                    that.quantityConfirmation(lastPhase);
+                },
+                function (oError, sHttpErrorMessage) {
+                    console.error("Error fetching data:", error);
+                    //that.handleErrorMessage(oError, sHttpErrorMessage);
+                }
+            );
+
             if (!bValidate) {
                 grController.isQuantityValid = false;
                 grController.oController.byId("grConfirmBtn").setEnabled(false);
-                if(typeof(NumberFormatter.dmcLocaleNumberParser(sValue)) === 'string'){
+                if (typeof (NumberFormatter.dmcLocaleNumberParser(sValue)) === 'string') {
                     ErrorHandler.setErrorState(oQuantityInpuCtrl, `${sValue} - ${Bundles.getStatusText("enum.status.PARSEMSG")}`);
                 }
             } else if (NumberFormatter.dmcLocaleNumberParser(sValue) === 0) {
                 grController.isQuantityValid = false;
                 grController.oController.byId("grConfirmBtn").setEnabled(false);
                 ErrorHandler.setErrorState(oQuantityInpuCtrl, Bundles.getGoodreceiptText("POSITIVE_INPUT"));
-            } else {
+            }
+            else {
+
                 grController.isQuantityValid = true;
                 if (oPostModel.getProperty(sBatchNumberProperty)) {
                     grController.isBatchNumberValid = true;
@@ -657,7 +776,7 @@ sap.ui.define([
             let mainController = grController.oController;
             let oView = mainController.getView();
             let dateTimeWithoutTimeZone = moment(moment(postingDateTime).format('YYYY-MM-DD HH:mm:ss')).valueOf();
-            let removeTimeZoneForNowOfCurrentPlant = moment(moment(new Date().toLocaleString("en-US", {timeZone: PlantSettings.getTimeZone()})).format('YYYY-MM-DD HH:mm:ss')).valueOf();
+            let removeTimeZoneForNowOfCurrentPlant = moment(moment(new Date().toLocaleString("en-US", { timeZone: PlantSettings.getTimeZone() })).format('YYYY-MM-DD HH:mm:ss')).valueOf();
 
             grController.isPostingDateValid = false;
             ErrorHandler.clearErrorState(oView.byId("postingDate"));
@@ -717,23 +836,23 @@ sap.ui.define([
         /***
          * Validation for custom field on live change
          */
-        onCustomFieldLiveChange : function(oEvent){
+        onCustomFieldLiveChange: function (oEvent) {
             let grController = this.GRPostController || this; // if this is controller.js, get GRPostController, else . return this;
             let mainController = grController.oController;
             let oView = mainController.getView();
-			let customFieldId =  oEvent.getSource().getId();
-			let customFieldData = oEvent.getSource().getValue();
-            
+            let customFieldId = oEvent.getSource().getId();
+            let customFieldData = oEvent.getSource().getValue();
+
             grController.isCustomFieldValid = false;
 
-			ErrorHandler.clearErrorState(oEvent.getSource());
-			oView.byId("grConfirmBtn").setEnabled(false);
+            ErrorHandler.clearErrorState(oEvent.getSource());
+            oView.byId("grConfirmBtn").setEnabled(false);
 
-			if (this._validateCustomField(customFieldData, customFieldId)) {
+            if (this._validateCustomField(customFieldData, customFieldId)) {
                 grController.isCustomFieldValid = true;
-				this._enableConfirmButton();
-			}
-		},
+                this._enableConfirmButton();
+            }
+        },
 
         /***
          * BatchNumber Validation to NOT allow '/', '*', '&', space
@@ -747,7 +866,7 @@ sap.ui.define([
          */
         _validateHandlingUnitNumber: function (sInputValue, sElementName) {
             return this._validateInputValue(sInputValue, sElementName, /^[^ ]+$/) &&
-            this._validateInputValue(sInputValue, sElementName, /^.{0,20}$/, Bundles.getGoodreceiptText("INVALID_HU_INPUT"));
+                this._validateInputValue(sInputValue, sElementName, /^.{0,20}$/, Bundles.getGoodreceiptText("INVALID_HU_INPUT"));
         },
 
         /***
@@ -784,7 +903,7 @@ sap.ui.define([
             // if storageLocation is EWM managed, then HU is required
             // if storageLocation is not EWM managed, then HU will not show , and is not required
             if (((bIsBachManaged && this.isBatchNumberValid) || (!bIsBachManaged)) && this.isQuantityValid
-            && ((bIsEwmManaged && this.isHandlingUnitNumberValid) || !bIsEwmManaged) && this.isCustomFieldValid && this.isPostingDateValid) {
+                && ((bIsEwmManaged && this.isHandlingUnitNumberValid) || !bIsEwmManaged) && this.isCustomFieldValid && this.isPostingDateValid) {
                 this.oController.getView().byId("grConfirmBtn").setEnabled(true);
             }
         },
@@ -901,7 +1020,7 @@ sap.ui.define([
             }
         },
 
-        handleBatchValueHelp: function(sMaterial, sPlant) {
+        handleBatchValueHelp: function (sMaterial, sPlant) {
             let grController = this.GRPostController || this;
             let mainController = grController.oController;
             let sBatchNumber = "";
@@ -944,7 +1063,7 @@ sap.ui.define([
                 that.postingsList = oResponseData;
                 that.postingsList.dontShowPrint = oParameters.dontShowPrint;
                 let oTableModel = mainController.byId("postingsTable").getModel("postingsModel");
-                if(!oTableModel) {
+                if (!oTableModel) {
                     oTableModel = new JSONModel();
                 }
                 if (that.oPageable.page === 0) {
@@ -1007,17 +1126,17 @@ sap.ui.define([
             }
         },
 
-        _buidPostingCustomFieldColumns: function(aPostingsListData) {
+        _buidPostingCustomFieldColumns: function (aPostingsListData) {
             let mainController = this.oController;
-			let oTable= mainController.byId("postingsTable");
+            let oTable = mainController.byId("postingsTable");
             let oListItem = mainController.byId("postingsTableListItem");
             let oHeaderColumnData = {};
             let that = this;
 
-            aPostingsListData.forEach(function(oRowdata) {
+            aPostingsListData.forEach(function (oRowdata) {
                 if (that.oController.oPluginConfiguration && that.oController.oPluginConfiguration.customField1 && oRowdata.customFieldData) {
                     let aCustomeDataFields = JSON.parse(oRowdata.customFieldData);
-                    aCustomeDataFields.forEach(function(oDataField) {
+                    aCustomeDataFields.forEach(function (oDataField) {
                         if (!oHeaderColumnData[oDataField.id]) {
                             oHeaderColumnData[oDataField.id] = that._getPluginConfigurationText(oDataField.id);
                         }
@@ -1033,7 +1152,7 @@ sap.ui.define([
                     header: new sap.m.Text({
                         text: oHeaderColumnData[sHeaderKey]
                     }),
-                    minScreenWidth: "Large" ,
+                    minScreenWidth: "Large",
                     demandPopin: true
                 });
                 oTable.insertColumn(oColumn, 9 + index);    // insert customField column
@@ -1068,7 +1187,7 @@ sap.ui.define([
             }
         },
 
-        _getPluginConfigurationText: function(sCustomFieldKey) {
+        _getPluginConfigurationText: function (sCustomFieldKey) {
             return this.oController.oPluginConfiguration && this.oController.oPluginConfiguration[sCustomFieldKey];
         },
 
@@ -1182,10 +1301,10 @@ sap.ui.define([
          * this here is the app controller
          */
         onClosePostingsDialog: function () {
-			let oTable= this.getView().byId("postingsTable");
+            let oTable = this.getView().byId("postingsTable");
             let oColumnListItem = this.getView().byId("postingsTableListItem");
 
-            oTable.getColumns().forEach(function(oColumn, nIndex) {
+            oTable.getColumns().forEach(function (oColumn, nIndex) {
                 if (oColumn.getStyleClass().indexOf(POSTING_CUMSTOM_FIELD) > -1) {
                     oColumnListItem.removeCell(nIndex);
                     oTable.removeColumn(oColumn);
