@@ -656,7 +656,10 @@ sap.ui.define([
         },
 
         quantityConfirmation:async function (phase) {
-            await this._hasParkedOrBatchCorrectionItems();
+            //Quantity validation only in case of finished goods
+            if(this.selectedLineItemData.type !== 'N') return;
+
+            // await this._hasParkedOrBatchCorrectionItems();
 
             var that = this;
             var productionUrl = this.oController.getProductionDataSourceUri();
@@ -674,38 +677,25 @@ sap.ui.define([
 
                     let oQuantityInpuCtrl = that.oController.byId("quantity");
                     let sValue = parseInt(oQuantityInpuCtrl.getValue());
-                    if (that.batchCorrection.content && that.batchCorrection.content.length > 0) {
-                        var totalyeild = that.batchCorrection.content[0].grQty
-                    } else {
-                        var totalyeild = oResponseData.totalYieldQuantity.value;
-                    }
+                    // if (that.batchCorrection.content && that.batchCorrection.content.length > 0) {
+                    //     var totalyeild = that.batchCorrection.content[0].grQty
+                    // } else {
+                    //     var totalyeild = oResponseData.totalYieldQuantity.value;
+                    // }
 
-                    //For finished goods, if entered value is greated than the reported yield, show error
-                    if(this.selectedLineItemData.type === 'N' && sValue >= totalyeild){
+                    var totalyeild = oResponseData.totalYieldQuantity.value;
+                    totalyeild = totalyeild - that.selectedLineItemData.receivedQuantity.value;
+
+                    //If entered value is greated than the reported yield, show error
+                    if(sValue >= totalyeild){
                         oQuantityInpuCtrl.setValueState("Error");
-                        oQuantityInpuCtrl.setValueStateText("GR quantity must be less than or equal to Yield quantity");
+                        var sMessage = that.oController.getI18nText('grQuantityGreaterThanYieldErrMsg',[oResponseData.totalYieldQuantity.value, oResponseData.totalYieldQuantity.unitOfMeasure.uom])
+                        oQuantityInpuCtrl.setValueStateText(sMessage);
                         that.oController.byId("grConfirmBtn").setEnabled(false);
                         return;
                     }
                     
                     oQuantityInpuCtrl.setValueState("None");
-                    
-                    // var lineItems = that.oController.grModel.oData.lineItems
-                    // for (let i = 0; i < lineItems.length; i++) {
-                    //     if (lineItems[i].type == "N") {
-                            // if (sValue >= totalyeild) {
-
-                            //     oQuantityInpuCtrl.setValueState("Error");
-                            //     oQuantityInpuCtrl.setValueStateText("GR quantity must be less than or equal to Yield quantity");
-                            //     that.oController.byId("grConfirmBtn").setEnabled(false);
-                            //     return;
-                            // } else {
-                            //     oQuantityInpuCtrl.setValueState("None");
-                            // }
-
-                    //     }
-                    // }
-
                 },
                 function (oError, oHttpErrorMessage) {
                     var err = oError ? oError : oHttpErrorMessage;
