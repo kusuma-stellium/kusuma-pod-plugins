@@ -98,6 +98,7 @@ sap.ui.define([
 
             this.GRPostController.setController(this);
             this.GRPostController.setSelectedOrderData(this.selectedOrderData);
+            this.GRPostController.setSelectedLineItemData(oEvent.getSource().getBindingContext().getObject());
 
             let oGRData = {};
             oGRData.material = selectedMaterial;

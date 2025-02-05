@@ -57,6 +57,10 @@ sap.ui.define([
             this.getShopOrderData(oData.order);
         },
 
+        setSelectedLineItemData: function(oData){
+            this.selectedLineItemData = oData;
+        },
+
         onInitGoodsReceiptDialog: function () {
             if (!this.postData) {
                 // Goods Receipt Post model
@@ -650,16 +654,9 @@ sap.ui.define([
                 clearTimeout(oSetTimeOut);
             }, 500);
         },
-        checkParkedOrBatchCorrectionItems: async function () {
 
-            const result = await this._hasParkedOrBatchCorrectionItems();
-
-
-        },
-
-        quantityConfirmation: function (phase) {
-            checkParkedOrBatchCorrectionItems.call(this);
-            //this._hasParkedOrBatchCorrectionItems()
+        quantityConfirmation:async function (phase) {
+            await this._hasParkedOrBatchCorrectionItems();
 
             var that = this;
             var productionUrl = this.oController.getProductionDataSourceUri();
@@ -683,21 +680,31 @@ sap.ui.define([
                         var totalyeild = oResponseData.totalYieldQuantity.value;
                     }
 
-                    var lineItems = that.oController.grModel.oData.lineItems
-                    for (let i = 0; i < lineItems.length; i++) {
-                        if (lineItems[i].type == "N") {
-                            if (sValue >= totalyeild) {
-
-                                oQuantityInpuCtrl.setValueState("Error");
-                                oQuantityInpuCtrl.setValueStateText("GR quantity must be less than or equal to Yield quantity");
-                                that.oController.byId("grConfirmBtn").setEnabled(false);
-                                return;
-                            } else {
-                                oQuantityInpuCtrl.setValueState("None");
-                            }
-
-                        }
+                    //For finished goods, if entered value is greated than the reported yield, show error
+                    if(this.selectedLineItemData.type === 'N' && sValue >= totalyeild){
+                        oQuantityInpuCtrl.setValueState("Error");
+                        oQuantityInpuCtrl.setValueStateText("GR quantity must be less than or equal to Yield quantity");
+                        that.oController.byId("grConfirmBtn").setEnabled(false);
+                        return;
                     }
+                    
+                    oQuantityInpuCtrl.setValueState("None");
+                    
+                    // var lineItems = that.oController.grModel.oData.lineItems
+                    // for (let i = 0; i < lineItems.length; i++) {
+                    //     if (lineItems[i].type == "N") {
+                            // if (sValue >= totalyeild) {
+
+                            //     oQuantityInpuCtrl.setValueState("Error");
+                            //     oQuantityInpuCtrl.setValueStateText("GR quantity must be less than or equal to Yield quantity");
+                            //     that.oController.byId("grConfirmBtn").setEnabled(false);
+                            //     return;
+                            // } else {
+                            //     oQuantityInpuCtrl.setValueState("None");
+                            // }
+
+                    //     }
+                    // }
 
                 },
                 function (oError, oHttpErrorMessage) {
