@@ -8,7 +8,7 @@ sap.ui.define([
     "use strict";
 
     let sDoneLoadingProperty = "/doneLoading";
-    let BatchBrowseType = BrowseBase.extend("sap.dm.dme.browse.BatchBrowse", {
+    let BatchBrowseType = BrowseBase.extend("Kusuma.ext.viewplugins.GoodsReceiptPlugin.controller.BatchBrowse", {
 
         constructor: function(sId, mSettings) {
             this.material = mSettings.material;

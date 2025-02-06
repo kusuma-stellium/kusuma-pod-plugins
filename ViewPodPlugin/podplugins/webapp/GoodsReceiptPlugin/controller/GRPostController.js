@@ -1,6 +1,6 @@
 sap.ui.define([
     "sap/ui/model/json/JSONModel",
-    "sap/dm/dme/browse/StorageLocationBrowse",
+    "Kusuma/ext/viewplugins/GoodsReceiptPlugin/controller/StorageLocationBrowse",
     "sap/dm/dme/formatter/NumberFormatter",
     "sap/dm/dme/formatter/DateTimeUtils",
     "sap/dm/dme/types/PlantDateType",
@@ -687,7 +687,7 @@ sap.ui.define([
                     totalyeild = totalyeild - that.selectedLineItemData.receivedQuantity.value;
 
                     //If entered value is greated than the reported yield, show error
-                    if(sValue >= totalyeild){
+                    if(sValue > totalyeild){
                         oQuantityInpuCtrl.setValueState("Error");
                         var sMessage = that.oController.getI18nText('grQuantityGreaterThanYieldErrMsg',[oResponseData.totalYieldQuantity.value, oResponseData.totalYieldQuantity.unitOfMeasure.uom])
                         oQuantityInpuCtrl.setValueStateText(sMessage);
