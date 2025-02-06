@@ -316,7 +316,10 @@ sap.ui.define(
                 fToleranceLower = oItem.targetQuantity.value;
               }
 
-              return oItem.consumedQuantity.value < fToleranceUpper || oItem.consumedQuantity.value > fToleranceLower;
+              var fUpperThreshold = oItem.targetQuantity.value * (1+ fToleranceUpper),
+                fLowerThreshold = oItem.targetQuantity.value * (1- fToleranceLower);
+
+              return oItem.consumedQuantity.value < fLowerThreshold || oItem.consumedQuantity.value > fUpperThreshold;
             });
 
             //If correction items are present, return true else return false
