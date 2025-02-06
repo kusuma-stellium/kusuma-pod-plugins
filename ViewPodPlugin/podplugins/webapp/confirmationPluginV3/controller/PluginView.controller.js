@@ -159,7 +159,10 @@ sap.ui.define(
          */
         onBeforeRenderingPlugin: function () {
           this.subscribe('phaseSelectionEvent', this._getParkedOrBatchCorrectionItems, this);
-          this.subscribe('phaseSelectionEvent', this.getBatchCorrectionData, this);
+
+          // this.subscribe('phaseSelectionEvent', this.getBatchCorrectionData, this);
+          // this.subscribe('phaseSelectionEvent', this._getGoodsReceiptSummary, this);
+
           this.subscribe('phaseSelectionEvent', this.getRecipesdata, this);
           this.subscribe('phaseSelectionEvent', this.ResourceStatus, this);
           this.subscribe('phaseSelectionEvent', this.getActivityConfirmationPluginData, this);
@@ -274,7 +277,8 @@ sap.ui.define(
         _getParkedOrBatchCorrectionItems: async function () {
           return Promise.allSettled([
             this._getApprovedBatchCorrection(),
-            this._getGoodsIssueSummary()
+            this._getGoodsIssueSummary(),
+            this._getGoodsReceiptSummary()
           ]).then((aValues) => {
 
             if (aValues[0].status === 'fulfilled') {
@@ -290,11 +294,21 @@ sap.ui.define(
             var oBatchCorrection = this.batchCorrection;
             var oGiSummary = aValues[1].value;
 
-            var fToleranceUpper = 0,
+            var fTargetValue = 0,
+              fToleranceUpper = 0,
               fToleranceLower = 0;
 
             var aItems = oGiSummary.lineItems.filter(oItem => {
               var oCorrItem = oBatchCorrection.content.find(val => val.component === oItem.materialId.material);
+
+              //In case of by product or co porduct, use GR recieved qty as consumed qty
+              if(oItem.componentType !== 'N'){
+                // var oGrItem = this.grSummary.find(oItem=>oItem.material === oItem.materialId.material);
+                // if(oGrItem){
+                  oItem.consumedQuantity.value = this._getReceivedGrQtyForMaterial(oItem.materialId.material)
+                // }
+              }
+
               /* 
               * Fallback logic for tolerance during validation
               *   In case of batch correction, use approved batch correction tolerance
@@ -303,21 +317,25 @@ sap.ui.define(
               *   In case no tolerance data is available, the consumed qty will be compared with the target quantity
               */
               if (oCorrItem) {
+                fTargetValue = Math.abs(oCorrItem.approvedQuantity);
                 fToleranceUpper = oCorrItem.approvedTUpper;
                 fToleranceLower = oCorrItem.approvedTLower;
               } else if (oItem.recipeComponentToleranceOver && oItem.recipeComponentToleranceUnder) {
+                fTargetValue = oItem.targetQuantity.value;
                 fToleranceUpper = oItem.recipeComponentToleranceOver;
                 fToleranceLower = oItem.recipeComponentToleranceUnder;
               } else if (oItem.toleranceOver && oItem.toleranceUnder) {
+                fTargetValue = oItem.targetQuantity.value;
                 fToleranceUpper = oItem.toleranceOver;
                 fToleranceLower = oItem.toleranceUnder;
               } else {
+                fTargetValue = oItem.targetQuantity.value;
                 fToleranceUpper = oItem.targetQuantity.value;
                 fToleranceLower = oItem.targetQuantity.value;
               }
 
-              var fUpperThreshold = oItem.targetQuantity.value * (1+ fToleranceUpper),
-                fLowerThreshold = oItem.targetQuantity.value * (1- fToleranceLower);
+              var fUpperThreshold = fTargetValue * (1+ fToleranceUpper / 100),
+                fLowerThreshold = fTargetValue * (1- fToleranceLower / 100);
 
               return oItem.consumedQuantity.value < fLowerThreshold || oItem.consumedQuantity.value > fUpperThreshold;
             });
@@ -327,10 +345,20 @@ sap.ui.define(
           });
         },
 
+        _getReceivedGrQtyForMaterial:function(sMaterial){
+          return this.grSummary.filter(oItem=>oItem.material === sMaterial).reduce((acc,val)=>{
+            acc+=val.quantityInBaseUnit.value;
+            return acc;
+          },0)
+        },
+
         onFinalConfirmationSelectionChange: function (oEvent) {
           var oControl = oEvent.getSource();
           if (oControl.getSelected()) {
+            this.byId('reportQuantityDialog').setBusyIndicatorDelay(0);
+            this.byId('reportQuantityDialog').setBusy(true);
             this._hasParkedOrBatchCorrectionItems().then(bFlag => {
+              this.byId('reportQuantityDialog').setBusy(false);
               if (bFlag) {
                 MessageBox.error(this.getI18nText('finalConfirmation.parkedOrBatchCorrErrMsg'));
                 oControl.setSelected(false);
@@ -338,6 +366,22 @@ sap.ui.define(
               }
             })
           }
+        },
+
+        _getGoodsReceiptSummary: function() {
+          var sUrl = this.getPublicApiRestDataSourceUri() + 'inventory/v1/inventory/goodsReceipts';
+          var oSelection = this.getPodSelectionModel().getSelection();
+          var oParams = {
+            plant: this.getPodController().getUserPlant(),
+            sfc: oSelection.getSfc(),
+            order: oSelection.getShopOrder().shopOrder
+          };
+          return new Promise((resolve, reject) => {
+            this.ajaxGetRequest(sUrl, oParams, resolve, reject);
+          }).then(oGRSummary=>{
+            this.grSummary = oGRSummary.content;
+            return oGRSummary.content
+          })
         },
 
         // getFinalconfirmationvalidation: function () {
