@@ -668,6 +668,9 @@ sap.ui.define([
             oParameters.batchId = this.selectedOrderData.sfc;
             oParameters.phase = phase.recipeOperation.operationActivity.operationActivity;
 
+            this.oController.byId("postDialog").setBusyIndicatorDelay(0);
+            this.oController.byId("postDialog").setBusy(true);
+
             this.oParameters = oParameters;
             var sUrl = productionUrl + 'quantityConfirmation/summary';
             this.oController.ajaxGetRequest(
@@ -676,7 +679,9 @@ sap.ui.define([
                 function (oResponseData) {
 
                     let oQuantityInpuCtrl = that.oController.byId("quantity");
-                    let sValue = parseInt(oQuantityInpuCtrl.getValue());
+                    //Change integer parsing to float
+                    // let sValue = parseInt(oQuantityInpuCtrl.getValue());
+                    let sValue = parseFloat(oQuantityInpuCtrl.getValue());
                     // if (that.batchCorrection.content && that.batchCorrection.content.length > 0) {
                     //     var totalyeild = that.batchCorrection.content[0].grQty
                     // } else {
@@ -692,15 +697,17 @@ sap.ui.define([
                         var sMessage = that.oController.getI18nText('grQuantityGreaterThanYieldErrMsg',[oResponseData.totalYieldQuantity.value, oResponseData.totalYieldQuantity.unitOfMeasure.uom])
                         oQuantityInpuCtrl.setValueStateText(sMessage);
                         that.oController.byId("grConfirmBtn").setEnabled(false);
+                        that.oController.byId("postDialog").setBusy(false);
                         return;
                     }
                     
                     oQuantityInpuCtrl.setValueState("None");
+                    that.oController.byId("postDialog").setBusy(false);
                 },
                 function (oError, oHttpErrorMessage) {
                     var err = oError ? oError : oHttpErrorMessage;
                     that.showErrorMessage(err, true, true);
-
+                    that.oController.byId("postDialog").setBusy(false);
                 }
             );
         },

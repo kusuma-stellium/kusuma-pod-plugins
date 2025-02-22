@@ -164,7 +164,7 @@ sap.ui.define(
           // this.subscribe('phaseSelectionEvent', this._getGoodsReceiptSummary, this);
 
           this.subscribe('phaseSelectionEvent', this.getRecipesdata, this);
-          this.subscribe('phaseSelectionEvent', this.ResourceStatus, this);
+          // this.subscribe('phaseSelectionEvent', this.ResourceStatus, this);
           this.subscribe('phaseSelectionEvent', this.getActivityConfirmationPluginData, this);
           this.subscribe('refreshPhaseList', this.handleYieldOrScrapReported, this);
 
@@ -189,19 +189,21 @@ sap.ui.define(
 
           //  this._setShowFooterToolbar();
         },
-        ResourceStatus: function () {
-          if (!this._validateResourceStatus(this.selectedOrderData.resource.resource)) {
-            MessageBox.error("Resource is not in productive / enabled status");
-            return;
-          }
-        },
+        // ResourceStatus: function () {
+        //   if (!this._validateResourceStatus(this.selectedOrderData.resource.resource)) {
+        //     MessageBox.error("Resource is not in productive / enabled status");
+        //     return;
+        //   }
+        // },
 
-        _validateResourceStatus: function (sResource) {
+        _validateResourceStatus: async function (sResource) {
           var aValidStatuses = ['PRODUCTIVE', 'ENABLED'];
-          return this._getResourceData(sResource).then(aResource => {
+          var oResource = await this._getResourceData(sResource).then(aResource => {
             if (!aResource || aResource.length < 0) return false;
             return aResource.find(oResource => aValidStatuses.includes(oResource.status));
           });
+
+          return oResource? true : false;
         },
 
         _getResourceData: function (sResource) {
@@ -237,13 +239,14 @@ sap.ui.define(
         // },
 
         _getGoodsIssueSummary: function () {
-          var sUrl = this.getPodController().getAssemblyDataSourceUri() + 'order/goodsIssue/summary';
-          var oParams = {
-            shopOrder: this.selectedOrderData.selectedShopOrder,
-            batchId: this.selectedOrderData.selectedSfc,
-            operationActivity: this.getPodSelectionModel().operations[0].operation,
-            stepId: this.selectedOrderData.truncatedPhaseId
-          };
+          var sUrl = this.getPublicApiRestDataSourceUri() + 'processorder/v2/goodsIssue/summary';
+          var oParams ={
+            plant: this.getPodController().getUserPlant(),
+            order: this.getPodSelectionModel().selectedOrderData.order,
+            sfc: this.getPodSelectionModel().selectedOrderData.sfc,
+            operationActivity: this.getPodSelectionModel().selectedPhaseData.operation.operation,
+            stepId: this.getPodSelectionModel().selectedPhaseData.stepId
+          }
           return new Promise((resolve, reject) => this.ajaxGetRequest(sUrl, oParams, resolve, reject));
         },
 
@@ -303,10 +306,9 @@ sap.ui.define(
 
               //In case of by product or co porduct, use GR recieved qty as consumed qty
               if(oItem.componentType !== 'N'){
-                // var oGrItem = this.grSummary.find(oItem=>oItem.material === oItem.materialId.material);
-                // if(oGrItem){
-                  oItem.consumedQuantity.value = this._getReceivedGrQtyForMaterial(oItem.materialId.material)
-                // }
+                  oItem.consumedQuantity.value = this._getReceivedGrQtyForMaterial(oItem.materialId.material);
+                  //In case of byProducts, use absolute values for comparison as the targets will be in negative
+                  oItem.targetQuantity.value = Math.abs(oItem.targetQuantity.value);
               }
 
               /* 
@@ -1574,7 +1576,7 @@ sap.ui.define(
           return false;
         },
 
-        onOpenReportQuantityDialog: function (oEvent) {
+        onOpenReportQuantityDialog: async function (oEvent) {
           var oView = this.getView(),
             oPostModel = oView.getModel('qtyPostModel'),
             oData = this.getView().getModel("quantitiesModel").getData().value[0];
@@ -1586,6 +1588,13 @@ sap.ui.define(
             MessageBox.error("Phase " + this.selectedOrderData.truncatedPhaseId + " is not in Active Status");
             return;
           }
+
+          var bResourceValid = await this._validateResourceStatus(this.selectedOrderData.resource.resource);
+          if (!bResourceValid) {
+            MessageBox.error("Resource is not in productive / enabled status");
+            return;
+          }          
+
           this.callServiceForTimeElementDesc();
 
           oPostModel.setProperty('/reasonCodeKey', '');
