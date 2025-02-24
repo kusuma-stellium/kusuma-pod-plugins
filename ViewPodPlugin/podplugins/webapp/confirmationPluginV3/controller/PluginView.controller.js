@@ -1589,6 +1589,15 @@ sap.ui.define(
             return;
           }
 
+          //Do not allow processing in case of open NC
+          var oNC = await this._hasNonConformances();
+          if (oNC.count > 0) {
+            MessageBox.error(this.getI18nText('closeNonConformanceErrMsg'), {
+              details: oNC.formattedText
+            });
+            return;
+          }
+
           var bResourceValid = await this._validateResourceStatus(this.selectedOrderData.resource.resource);
           if (!bResourceValid) {
             MessageBox.error("Resource is not in productive / enabled status");
@@ -3285,6 +3294,52 @@ sap.ui.define(
 
         _endsWith: function (str, suffix) {
           return str.indexOf(suffix, str.length - suffix.length) !== -1;
+        },
+        
+        _getNonconformances: function() {
+          var sUrl = this.getPublicApiRestDataSourceUri() + 'nonconformance/v1/nonconformances';
+          var oParams = {
+            plant: this.getPodController().getUserPlant(),
+            sfc: this.getPodSelectionModel().selectedOrderData.sfc
+          };
+          return new Promise((resolve, reject) => this.ajaxGetRequest(sUrl, oParams, resolve, reject));
+        },
+
+        _hasNonConformances: async function() {
+          var aNonconformances = await this._getNonconformances().catch(oError => {
+            console.error(oError);
+          });
+
+          //If the array is empty, there are no NCs logged
+          if (aNonconformances && aNonconformances.length === 0)
+            return {
+              count: 0,
+              items: [],
+              formattedText: ''
+            };
+
+          //Filter the response. If there are NC in OPEN state, return true
+          var aOpenNC = aNonconformances.filter(oNC => oNC.state === 'OPEN');
+          if (aOpenNC && aOpenNC.length > 0) {
+            var sFormattedText =
+              '<p><strong>Open Nonconformance:</strong></p>' +
+              '<ul>' +
+              aOpenNC.map(oNC => `<li>${oNC.incidentNumber.incidentNumber} - ${oNC.code.code} - ${oNC.code.description}</li>`).join('') +
+              '</ul>';
+
+            return {
+              count: aOpenNC.length,
+              items: aOpenNC,
+              formattedText: sFormattedText
+            };
+          }
+
+          //Default return
+          return {
+            count: 0,
+            items: [],
+            formattedText: ''
+          };
         }
       }
     );
