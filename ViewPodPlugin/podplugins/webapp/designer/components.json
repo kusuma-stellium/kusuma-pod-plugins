@@ -28,7 +28,7 @@
             "name": "Kusuma.ext.viewplugins.confirmationPluginV3",
             "propertyEditor": "Kusuma.ext.viewplugins.confirmationPluginV3.builder.PropertyEditor",
             "i18n": "Kusuma.ext.viewplugins.confirmationPluginV3.i18n.i18n",
-            "productionProcessEnabled": false,
+            "productionProcessEnabled": true,
             "supportedPodTypes": ["WORK_CENTER","OPERATION", "ORDER", "OTHER", "MONITOR"]
         },
         {
@@ -48,7 +48,7 @@
             "name": "Kusuma.ext.viewplugins.GRPlugin",
             "propertyEditor": "Kusuma.ext.viewplugins.GRPlugin.builder.PropertyEditor",
             "i18n": "Kusuma.ext.viewplugins.GRPlugin.i18n.i18n",
-            "productionProcessEnabled": false,
+            "productionProcessEnabled": true,
             "supportedPodTypes": ["WORK_CENTER","OPERATION", "ORDER", "OTHER", "MONITOR"]
         }
         

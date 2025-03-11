@@ -2661,7 +2661,9 @@ sap.ui.define(
         //  this.onCloseReportQuantityDialog();
         Promise.all([this.reportQuantity(), this.reportActivity()]).then(aResponse => {
           if (this.phaseControlKey === 'ZM01' && this.qtyPostData.finalConfirmation) {
-            this._postConfirmationNonMilestone();
+            this._postConfirmationNonMilestone().then(oResponse => {
+              this.publish('refreshPhaseList', { });
+            });
           }
         });
       },
@@ -3132,13 +3134,15 @@ sap.ui.define(
       _postConfirmationNonMilestone: function() {
         //AD_PHASE_CONFIRMATION_V3 - CPP_qtyAndActivityConfirmationAndCompletionOfNonMilestoneOperations
         var sUrl =
-          this.getPublicApiRestDataSourceUri() + '/pe/api/v1/process/processDefinitions/start?key=REG_2c2593aa-8b62-4ed3-9170-451829b8fbf0';
+          this.getPublicApiRestDataSourceUri() +
+          '/pe/api/v1/process/processDefinitions/start?key=REG_2c2593aa-8b62-4ed3-9170-451829b8fbf0&async=false';
         var oPodSelectionModel = this.getPodSelectionModel(),
           oSelectedOrder = oPodSelectionModel.selectedOrderData,
           oSelectedPhase = oPodSelectionModel.selectedPhaseData;
         var oPayload = {
-          InOperation: oSelectedPhase.operation.operation,
+          // InOperation: oSelectedPhase.operation.operation,
           // InOperationVersion: oSelectedPhase.operation.version,
+          InOperation: oSelectedPhase.phaseId,
           InOperationVersion: 'A',
           InOrder: oSelectedOrder.order,
           InPlant: this.getPodController().getUserPlant(),
