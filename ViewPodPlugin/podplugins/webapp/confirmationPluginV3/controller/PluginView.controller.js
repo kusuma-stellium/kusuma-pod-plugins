@@ -239,7 +239,8 @@ sap.ui.define(
           plant: this.getPodController().getUserPlant(),
           order: this.getPodSelectionModel().selectedOrderData.order,
           sfc: this.getPodSelectionModel().selectedOrderData.sfc,
-          operationActivity: this.getPodSelectionModel().selectedPhaseData.operation.operation,
+          // operationActivity: this.getPodSelectionModel().selectedPhaseData.operation.operation,
+          operationActivity: this.getPodSelectionModel().selectedPhaseData.phaseId,
           stepId: this.getPodSelectionModel().selectedPhaseData.stepId
         };
         return new Promise((resolve, reject) => this.ajaxGetRequest(sUrl, oParams, resolve, reject));
@@ -296,6 +297,11 @@ sap.ui.define(
             fToleranceLower = 0;
 
           var aItems = oGiSummary.lineItems.filter(oItem => {
+            //Bypass check for water BOM components
+            if (parseInt(oItem.materialId.material) >= 5500000000000 && parseInt(oItem.materialId.material) <= 5599999999999) {
+              return false;
+            }
+
             var oCorrItem = oBatchCorrection.content.find(val => val.component === oItem.materialId.material);
 
             //In case of by product or co porduct, use GR recieved qty as consumed qty
@@ -326,8 +332,10 @@ sap.ui.define(
               fToleranceLower = oItem.toleranceUnder;
             } else {
               fTargetValue = oItem.targetQuantity.value;
-              fToleranceUpper = oItem.targetQuantity.value;
-              fToleranceLower = oItem.targetQuantity.value;
+              // fToleranceUpper = oItem.targetQuantity.value;
+              // fToleranceLower = oItem.targetQuantity.value;
+              fToleranceUpper = 0;
+              fToleranceLower = 0;
             }
 
             var fUpperThreshold = fTargetValue * (1 + fToleranceUpper / 100),
@@ -2662,7 +2670,7 @@ sap.ui.define(
         Promise.all([this.reportQuantity(), this.reportActivity()]).then(aResponse => {
           if (this.phaseControlKey === 'ZM01' && this.qtyPostData.finalConfirmation) {
             this._postConfirmationNonMilestone().then(oResponse => {
-              this.publish('refreshPhaseList', { });
+              this.publish('refreshPhaseList', {});
             });
           }
         });
