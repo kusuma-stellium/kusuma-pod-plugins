@@ -15,9 +15,9 @@ sap.ui.define(
     'sap/ui/model/Sorter',
     './../utils/formatter',
     './../utils/ErrorHandler',
-    './../utils/ReasonCodeDialog'
+    './../utils/ReasonCodeDialog',
   ],
-  function(
+  function (
     JSONModel,
     PluginViewController,
     DateTimeUtils,
@@ -42,7 +42,7 @@ sap.ui.define(
 
     var oPluginViewController = PluginViewController.extend('Kusuma.ext.viewplugins.confirmationPluginV3.controller.PluginView', {
       metadata: {
-        properties: {}
+        properties: {},
       },
 
       oFormatter: Formatter,
@@ -50,10 +50,10 @@ sap.ui.define(
       ReasonCodeDialogUtil: ReasonCodeDialogUtil,
 
       reasonCodeData: {
-        timeElementReasonCodeTree: []
+        timeElementReasonCodeTree: [],
       },
 
-      onInit: function() {
+      onInit: function () {
         if (PluginViewController.prototype.onInit) {
           PluginViewController.prototype.onInit.apply(this, arguments);
         }
@@ -66,7 +66,7 @@ sap.ui.define(
           workCenter: '',
           postedBy: '',
           postingDate: '',
-          finalConfirmation: false
+          finalConfirmation: false,
         };
 
         var oActivityPostModel = new JSONModel(this.actPostData);
@@ -84,36 +84,36 @@ sap.ui.define(
             unitOfMeasure: {
               uom: '',
               shortText: '',
-              longText: ''
-            }
+              longText: '',
+            },
           },
           scrapQuantity: {
             value: '',
             unitOfMeasure: {
               uom: '',
               shortText: '',
-              longText: ''
-            }
+              longText: '',
+            },
           },
           userId: '',
           dateTime: '',
           batchNumber: '',
           storageLocation: '',
-          finalConfirmation: false
+          finalConfirmation: false,
         };
 
         this.batchCorrection = {
-          content: []
+          content: [],
         };
 
         this.page = 0;
         const TablePersonalizeService = {
           oData: {
             _persoSchemaVersion: '1.0',
-            aColumns: []
+            aColumns: [],
           },
 
-          getPersData: function() {
+          getPersData: function () {
             const oDeferred = new jQuery.Deferred();
             if (!this._oBundle) {
               this._oBundle = this.oData;
@@ -123,12 +123,12 @@ sap.ui.define(
             return oDeferred.promise();
           },
 
-          setPersData: function(oBundle) {
+          setPersData: function (oBundle) {
             const oDeferred = new jQuery.Deferred();
             this._oBundle = oBundle;
             oDeferred.resolve();
             return oDeferred.promise();
-          }
+          },
         };
         this._mViewSettingsDialogs = {};
         TablePersonalizeService.getPersData();
@@ -136,7 +136,7 @@ sap.ui.define(
         this._oTableSettings = new TablePersoController({
           table: this.byId('postingsTable'),
           componentName: 'settings',
-          persoService: TablePersonalizeService
+          persoService: TablePersonalizeService,
         }).activate();
 
         var oQuantityPostModel = new JSONModel(this.qtyPostData);
@@ -150,9 +150,9 @@ sap.ui.define(
       },
 
       /**
-         * @see PluginViewController.onBeforeRenderingPlugin()
-         */
-      onBeforeRenderingPlugin: function() {
+       * @see PluginViewController.onBeforeRenderingPlugin()
+       */
+      onBeforeRenderingPlugin: function () {
         this.subscribe('phaseSelectionEvent', this._getParkedOrBatchCorrectionItems, this);
 
         // this.subscribe('phaseSelectionEvent', this.getBatchCorrectionData, this);
@@ -191,21 +191,21 @@ sap.ui.define(
       //   }
       // },
 
-      _validateResourceStatus: async function(sResource) {
+      _validateResourceStatus: async function (sResource) {
         var aValidStatuses = ['PRODUCTIVE', 'ENABLED'];
-        var oResource = await this._getResourceData(sResource).then(aResource => {
+        var oResource = await this._getResourceData(sResource).then((aResource) => {
           if (!aResource || aResource.length < 0) return false;
-          return aResource.find(oResource => aValidStatuses.includes(oResource.status));
+          return aResource.find((oResource) => aValidStatuses.includes(oResource.status));
         });
 
         return oResource ? true : false;
       },
 
-      _getResourceData: function(sResource) {
+      _getResourceData: function (sResource) {
         var sUrl = this.getPublicApiRestDataSourceUri() + '/resource/v2/resources';
         var oParamters = {
           plant: this.getPodController().getUserPlant(),
-          resource: sResource
+          resource: sResource,
         };
 
         return new Promise((resolve, reject) => this.ajaxGetRequest(sUrl, oParamters, resolve, reject));
@@ -233,17 +233,17 @@ sap.ui.define(
 
       // },
 
-      _getResourceWorkcenterData:function(sResource){
+      _getResourceWorkcenterData: function (sResource) {
         var sUrl = this.getPublicApiRestDataSourceUri() + 'workcenter/v2/workcenters';
         var oParamters = {
           plant: this.getPodController().getUserPlant(),
-          resourceMembers: sResource
+          resourceMembers: sResource,
         };
 
         return new Promise((resolve, reject) => this.ajaxGetRequest(sUrl, oParamters, resolve, reject));
       },
 
-      _getGoodsIssueSummary: function() {
+      _getGoodsIssueSummary: function () {
         var sUrl = this.getPublicApiRestDataSourceUri() + 'processorder/v2/goodsIssue/summary';
         var oParams = {
           plant: this.getPodController().getUserPlant(),
@@ -251,130 +251,130 @@ sap.ui.define(
           sfc: this.getPodSelectionModel().selectedOrderData.sfc,
           // operationActivity: this.getPodSelectionModel().selectedPhaseData.operation.operation,
           operationActivity: this.getPodSelectionModel().selectedPhaseData.phaseId,
-          stepId: this.getPodSelectionModel().selectedPhaseData.stepId
+          stepId: this.getPodSelectionModel().selectedPhaseData.stepId,
         };
         return new Promise((resolve, reject) => this.ajaxGetRequest(sUrl, oParams, resolve, reject));
       },
 
-      _getApprovedBatchCorrection: function() {
+      _getApprovedBatchCorrection: function () {
         var sUrl =
           this.getPublicApiRestDataSourceUri() +
           '/pe/api/v1/process/processDefinitions/start?key=REG_04527345-c48f-44c1-9424-5b65503c18ed&async=false';
         var oSelection = this.getPodSelectionModel().getSelection();
         var oParams = {
           order: oSelection.getShopOrder().shopOrder,
-          sfc: oSelection.getSfc()
+          sfc: oSelection.getSfc(),
         };
         return new Promise((resolve, reject) => this.ajaxPostRequest(sUrl, oParams, resolve, reject));
       },
 
       /**
-         * Checks if there are any parked or batch correction items based on tolerance values.
-         *
-         * This function retrieves approved batch corrections and goods issue summary, 
-         * then filters the line items based on their consumed quantity falling within 
-         * tolerance limits.
-         *
-         * @returns {Promise<boolean>} A promise that resolves to `true` if correction items are present, otherwise `false`.
-         */
-      _hasParkedOrBatchCorrectionItems: async function() {
-        return this._getParkedOrBatchCorrectionItems().then(aItems => {
+       * Checks if there are any parked or batch correction items based on tolerance values.
+       *
+       * This function retrieves approved batch corrections and goods issue summary,
+       * then filters the line items based on their consumed quantity falling within
+       * tolerance limits.
+       *
+       * @returns {Promise<boolean>} A promise that resolves to `true` if correction items are present, otherwise `false`.
+       */
+      _hasParkedOrBatchCorrectionItems: async function () {
+        return this._getParkedOrBatchCorrectionItems().then((aItems) => {
           return aItems.length > 0;
         });
       },
 
-      _getParkedOrBatchCorrectionItems: async function() {
-        return Promise.allSettled([
-          this._getApprovedBatchCorrection(),
-          this._getGoodsIssueSummary(),
-          this._getGoodsReceiptSummary()
-        ]).then(aValues => {
-          if (aValues[0].status === 'fulfilled') {
-            this.batchCorrection = aValues[0].value;
-          }
-
-          if (this.batchCorrection.content && this.batchCorrection.content.length > 0) {
-            this.byId('idApprovedQtyTitle').setText(this.getI18nText('approvedGRQtyTitle', [this.batchCorrection.content[0].grQty]));
-          } else {
-            var oSelectedOrder = this.getPodSelectionModel().selectedOrderData,
-              fPlannedQty = oSelectedOrder.plannedQty,
-              sUOM = oSelectedOrder.productionInternalUom;
-            this.byId('idApprovedQtyTitle').setText(this.getI18nText('GRQtyTitle',[parseFloat(fPlannedQty).toFixed(3), sUOM]));
-          }
-
-          var oBatchCorrection = this.batchCorrection;
-          var oGiSummary = aValues[1].value;
-
-          var fTargetValue = 0,
-            fToleranceUpper = 0,
-            fToleranceLower = 0;
-
-          var aItems = oGiSummary.lineItems.filter(oItem => {
-            //Bypass check for water BOM components
-            if (parseInt(oItem.materialId.material) >= 5500000000000 && parseInt(oItem.materialId.material) <= 5599999999999) {
-              return false;
+      _getParkedOrBatchCorrectionItems: async function () {
+        return Promise.allSettled([this._getApprovedBatchCorrection(), this._getGoodsIssueSummary(), this._getGoodsReceiptSummary()]).then(
+          (aValues) => {
+            if (aValues[0].status === 'fulfilled') {
+              this.batchCorrection = aValues[0].value;
             }
 
-            var oCorrItem = oBatchCorrection.content.find(val => val.component === oItem.materialId.material);
-
-            //In case of by product or co porduct, use GR recieved qty as consumed qty
-            if (oItem.componentType !== 'N') {
-              oItem.consumedQuantity.value = this._getReceivedGrQtyForMaterial(oItem.materialId.material);
-              //In case of byProducts, use absolute values for comparison as the targets will be in negative
-              oItem.targetQuantity.value = Math.abs(oItem.targetQuantity.value);
-            }
-
-            /* 
-              * Fallback logic for tolerance during validation
-              *   In case of batch correction, use approved batch correction tolerance
-              *   In case recipe tolerances are available, use that for validation
-              *   In case bom tolerances are available, use that for validation
-              *   In case no tolerance data is available, the consumed qty will be compared with the target quantity
-              */
-            if (oCorrItem) {
-              fTargetValue = Math.abs(oCorrItem.approvedQuantity);
-              fToleranceUpper = oCorrItem.approvedTUpper;
-              fToleranceLower = oCorrItem.approvedTLower;
-            } else if (oItem.recipeComponentToleranceOver && oItem.recipeComponentToleranceUnder) {
-              fTargetValue = oItem.targetQuantity.value;
-              fToleranceUpper = oItem.recipeComponentToleranceOver;
-              fToleranceLower = oItem.recipeComponentToleranceUnder;
-            } else if (oItem.toleranceOver && oItem.toleranceUnder) {
-              fTargetValue = oItem.targetQuantity.value;
-              fToleranceUpper = oItem.toleranceOver;
-              fToleranceLower = oItem.toleranceUnder;
+            if (this.batchCorrection.content && this.batchCorrection.content.length > 0) {
+              this.byId('idApprovedQtyTitle').setText(this.getI18nText('approvedGRQtyTitle', [this.batchCorrection.content[0].grQty]));
             } else {
-              fTargetValue = oItem.targetQuantity.value;
-              // fToleranceUpper = oItem.targetQuantity.value;
-              // fToleranceLower = oItem.targetQuantity.value;
-              fToleranceUpper = 0;
-              fToleranceLower = 0;
+              var oSelectedOrder = this.getPodSelectionModel().selectedOrderData,
+                fPlannedQty = oSelectedOrder.plannedQty,
+                sUOM = oSelectedOrder.productionInternalUom;
+              this.byId('idApprovedQtyTitle').setText(this.getI18nText('GRQtyTitle', [parseFloat(fPlannedQty).toFixed(3), sUOM]));
             }
 
-            var fUpperThreshold = fTargetValue * (1 + fToleranceUpper / 100),
-              fLowerThreshold = fTargetValue * (1 - fToleranceLower / 100);
+            var oBatchCorrection = this.batchCorrection;
+            var oGiSummary = aValues[1].value;
 
-            return oItem.consumedQuantity.value < fLowerThreshold || oItem.consumedQuantity.value > fUpperThreshold;
-          });
+            var fTargetValue = 0,
+              fToleranceUpper = 0,
+              fToleranceLower = 0;
 
-          //If correction items are present, return true else return false
-          return aItems;
-        });
+            var aItems = oGiSummary.lineItems.filter((oItem) => {
+              //Bypass check for water BOM components
+              if (parseInt(oItem.materialId.material) >= 5500000000000 && parseInt(oItem.materialId.material) <= 5599999999999) {
+                return false;
+              }
+
+              var oCorrItem = oBatchCorrection.content.find((val) => val.component === oItem.materialId.material);
+
+              //In case of by product or co porduct, use GR recieved qty as consumed qty
+              if (oItem.componentType !== 'N') {
+                oItem.consumedQuantity.value = this._getReceivedGrQtyForMaterial(oItem.materialId.material);
+                //In case of byProducts, use absolute values for comparison as the targets will be in negative
+                oItem.targetQuantity.value = Math.abs(oItem.targetQuantity.value);
+              }
+
+              /*
+               * Fallback logic for tolerance during validation
+               *   In case of batch correction, use approved batch correction tolerance
+               *   In case recipe tolerances are available, use that for validation
+               *   In case bom tolerances are available, use that for validation
+               *   In case no tolerance data is available, the consumed qty will be compared with the target quantity
+               */
+              if (oCorrItem) {
+                fTargetValue = Math.abs(oCorrItem.approvedQuantity);
+                fToleranceUpper = oCorrItem.approvedTUpper;
+                fToleranceLower = oCorrItem.approvedTLower;
+              } else if (oItem.recipeComponentToleranceOver && oItem.recipeComponentToleranceUnder) {
+                fTargetValue = oItem.targetQuantity.value;
+                fToleranceUpper = oItem.recipeComponentToleranceOver;
+                fToleranceLower = oItem.recipeComponentToleranceUnder;
+              } else if (oItem.toleranceOver && oItem.toleranceUnder) {
+                fTargetValue = oItem.targetQuantity.value;
+                fToleranceUpper = oItem.toleranceOver;
+                fToleranceLower = oItem.toleranceUnder;
+              } else {
+                fTargetValue = oItem.targetQuantity.value;
+                // fToleranceUpper = oItem.targetQuantity.value;
+                // fToleranceLower = oItem.targetQuantity.value;
+                fToleranceUpper = 0;
+                fToleranceLower = 0;
+              }
+
+              var fUpperThreshold = fTargetValue * (1 + fToleranceUpper / 100),
+                fLowerThreshold = fTargetValue * (1 - fToleranceLower / 100);
+
+              return oItem.consumedQuantity.value < fLowerThreshold || oItem.consumedQuantity.value > fUpperThreshold;
+            });
+
+            //If correction items are present, return true else return false
+            return aItems;
+          }
+        );
       },
 
-      _getReceivedGrQtyForMaterial: function(sMaterial) {
-        return this.grSummary.filter(oItem => oItem.material === sMaterial).reduce((acc, val) => {
-          acc += val.quantityInBaseUnit.value;
-          return acc;
-        }, 0);
+      _getReceivedGrQtyForMaterial: function (sMaterial) {
+        return this.grSummary
+          .filter((oItem) => oItem.material === sMaterial)
+          .reduce((acc, val) => {
+            acc += val.quantityInBaseUnit.value;
+            return acc;
+          }, 0);
       },
 
-      onFinalConfirmationSelectionChange: function(oEvent) {
+      onFinalConfirmationSelectionChange: function (oEvent) {
         var oControl = oEvent.getSource();
         if (oControl.getSelected()) {
           this.byId('reportQuantityDialog').setBusyIndicatorDelay(0);
           this.byId('reportQuantityDialog').setBusy(true);
-          this._hasParkedOrBatchCorrectionItems().then(bFlag => {
+          this._hasParkedOrBatchCorrectionItems().then((bFlag) => {
             this.byId('reportQuantityDialog').setBusy(false);
             if (bFlag) {
               MessageBox.error(this.getI18nText('finalConfirmation.parkedOrBatchCorrErrMsg'));
@@ -385,23 +385,23 @@ sap.ui.define(
         }
       },
 
-      _getGoodsReceiptSummary: function() {
+      _getGoodsReceiptSummary: function () {
         var sUrl = this.getPublicApiRestDataSourceUri() + 'inventory/v1/inventory/goodsReceipts';
         var oSelection = this.getPodSelectionModel().getSelection();
         var oParams = {
           plant: this.getPodController().getUserPlant(),
           sfc: oSelection.getSfc(),
-          order: oSelection.getShopOrder().shopOrder
+          order: oSelection.getShopOrder().shopOrder,
         };
         return new Promise((resolve, reject) => {
           this.ajaxGetRequest(sUrl, oParams, resolve, reject);
-        }).then(oGRSummary => {
+        }).then((oGRSummary) => {
           this.grSummary = oGRSummary.content;
           return oGRSummary.content;
         });
       },
 
-      getRecipesdata: function() {
+      getRecipesdata: function () {
         var that = this;
         var oReportButton = this.byId('Report');
         var sRecipeType = 'SHOP_ORDER';
@@ -409,16 +409,16 @@ sap.ui.define(
         var oParamters = {
           plant: this.getPodController().getUserPlant(),
           recipe: this.selectedOrderData.selectedShopOrder,
-          recipeType: sRecipeType
+          recipeType: sRecipeType,
         };
         this.ajaxGetRequest(
           sUrl,
           oParamters,
-          function(oResponseData) {
+          function (oResponseData) {
             var oData = oResponseData;
             var data = oResponseData[0].phases;
-            oResponseData.forEach(response => {
-              response.phases.forEach(phase => {
+            oResponseData.forEach((response) => {
+              response.phases.forEach((phase) => {
                 if (phase.phaseId === that.selectedOrderData.stepId) {
                   that.phaseControlKey = phase.controlKey.controlKey;
                   if (phase.controlKey.controlKey == 'ZN01') {
@@ -430,20 +430,20 @@ sap.ui.define(
               });
             });
           },
-          function(oError, sHttpErrorMessage) {
+          function (oError, sHttpErrorMessage) {
             console.error('Error fetching data:', error);
             //that.handleErrorMessage(oError, sHttpErrorMessage);
           }
         );
       },
 
-      _setShowFooterToolbar: function() {
+      _setShowFooterToolbar: function () {
         var oActivityReportBtn = this.getView().byId('reportButton'),
           oQuantitiesModel = this.getView().getModel('quantitiesModel'),
           aQtyItems = oQuantitiesModel.getProperty('/value'),
           bFlag = false;
 
-        bFlag = aQtyItems.every(item => item.userAuthorizedForWorkCenter && item.status !== 'COMPLETED');
+        bFlag = aQtyItems.every((item) => item.userAuthorizedForWorkCenter && item.status !== 'COMPLETED');
 
         if (bFlag) {
           // bFlag = oActivityReportBtn.getEnabled();
@@ -453,7 +453,7 @@ sap.ui.define(
         // oToolbar.setVisible(bFlag);
       },
 
-      onExit: function() {
+      onExit: function () {
         if (this.selectReasonCodeDialog !== undefined) {
           this.selectReasonCodeDialog.destroy();
         }
@@ -475,7 +475,7 @@ sap.ui.define(
         }
       },
 
-      onBeforeRendering: function() {
+      onBeforeRendering: function () {
         this.oPluginConfiguration = this.getConfiguration();
         var oPodSelectionModel = this.getPodSelectionModel();
         if (oPodSelectionModel.podType === 'OPERATION') {
@@ -484,20 +484,20 @@ sap.ui.define(
         }
       },
 
-      onAfterRendering: function() {},
+      onAfterRendering: function () {},
 
-      isSubscribingToNotifications: function() {
+      isSubscribingToNotifications: function () {
         return true;
       },
 
-      getNotificationMessageHandler: function(sTopic) {
+      getNotificationMessageHandler: function (sTopic) {
         if (sTopic === Topic.BACKFLUSH_FAILURE_MSG) {
           return this.handleBackflushFailureMessages;
         }
         return null;
       },
 
-      handleBackflushFailureMessages: function(oMsg) {
+      handleBackflushFailureMessages: function (oMsg) {
         if (this.selectedOrderData.erpAutoGRStatus) {
           this.publish('refreshOrderQtyForAutoGR', this); //Refresh goods receipt quantity in the Order Card.
         }
@@ -508,7 +508,7 @@ sap.ui.define(
           // If there are new backflush faliures, we need to refresh the alerts.
           HandleAlerts.getAlerts(this, this.selectedOrderData.workCenter.workcenter, null);
           var backflushFailureMessages = '<ul>';
-          oMsg.failureMessages.forEach(function(errorMessage) {
+          oMsg.failureMessages.forEach(function (errorMessage) {
             if (errorMessage) {
               backflushFailureMessages += '<li>' + errorMessage + '</li>';
             }
@@ -516,25 +516,25 @@ sap.ui.define(
           backflushFailureMessages += '</ul>';
           MessageBox.error(this.getI18nText('BACKFLUSH_FAILURE_MESSAGE'), {
             title: 'Error',
-            details: backflushFailureMessages
+            details: backflushFailureMessages,
           });
         } else {
           this.addMessage(MessageType.Success, this.getI18nText('BACKFLUSH_POSTED_SUCCESSFULLY'));
         }
       },
 
-      handleYieldOrScrapReported: function(sChannelId, sEventId, oData) {
+      handleYieldOrScrapReported: function (sChannelId, sEventId, oData) {
         this.yieldOrScrapReported = oData.stepId === this.selectedOrderData.stepId ? true : false;
       },
 
-      getActivityConfirmationPluginData: function(sChannelId, sEventId, oData) {
+      getActivityConfirmationPluginData: function (sChannelId, sEventId, oData) {
         this.selectedOrderData = oData;
         //resetting the flag to false when the phase change happens.
         this.yieldOrScrapReported = false;
         this.getActivityConfirmationPluginSummary(this.selectedOrderData);
       },
 
-      getActivityConfirmationPluginSummary: function(oData) {
+      getActivityConfirmationPluginSummary: function (oData) {
         var activityConfirmationUrl = this.getActivityConfirmationRestDataSourceUri();
         var sUrl = activityConfirmationUrl + 'activityconfirmation/postings/aggregates/phase';
         var oParameters = {};
@@ -569,7 +569,7 @@ sap.ui.define(
         }
       },
 
-      postFetchActivityConfirmationPluginData: function(sUrl, oParameters, oData) {
+      postFetchActivityConfirmationPluginData: function (sUrl, oParameters, oData) {
         var oPodSelectionModel = this.getPodSelectionModel();
         var oActivityList = this.byId('activityList');
         var oTitleTextControl = this.byId('titleText');
@@ -585,7 +585,7 @@ sap.ui.define(
         this.ajaxGetRequest(
           sUrl,
           oParameters,
-          function(oResponseData) {
+          function (oResponseData) {
             // adding user work center authorization flag to response
             oResponseData.userAuthorizedForWorkCenter = userAuthFlag !== null && userAuthFlag !== undefined ? userAuthFlag : false;
             oResponseData.phaseStartDate = phaseStartDate;
@@ -600,7 +600,7 @@ sap.ui.define(
                 that.getI18nText('Activities') + ' (' + that.activityConfirmationPluginList.activitySummary.length + ')'
               );
               that.activityConfirmationPluginList.isActivityExist = true;
-              that.activityConfirmationPluginList.activitySummary.sort(function(x, y) {
+              that.activityConfirmationPluginList.activitySummary.sort(function (x, y) {
                 var a = x.sequence;
                 var b = y.sequence;
                 var c = x.activityId.toUpperCase();
@@ -625,7 +625,7 @@ sap.ui.define(
 
             //that._setShowFooterToolbar();
           },
-          function(oError, oHttpErrorMessage) {
+          function (oError, oHttpErrorMessage) {
             var err = oError ? oError : oHttpErrorMessage;
             that.showErrorMessage(err, true, true);
             that.setEmptyResponseToActivityTable(oActivityList, oTitleTextControl);
@@ -634,7 +634,7 @@ sap.ui.define(
         );
       },
 
-      onPressPostingButton: function(oEvent) {
+      onPressPostingButton: function (oEvent) {
         var oData = oEvent.getSource().getBindingContext().getObject();
         var oGenericData = oEvent.getSource().getModel().getData();
         var oParameters = {};
@@ -650,14 +650,14 @@ sap.ui.define(
         this.postFetchReportedActivityConfirmationData(sUrl, oParameters, activityText, oData.activityId);
       },
 
-      postFetchReportedActivityConfirmationData: function(sUrl, oParameters, activityText, activityId) {
+      postFetchReportedActivityConfirmationData: function (sUrl, oParameters, activityText, activityId) {
         var that = this;
         var oView = this.getView();
         that.byId('activityList').setBusy(true);
         this.ajaxGetRequest(
           sUrl,
           oParameters,
-          function(oResponseData) {
+          function (oResponseData) {
             that.reportedActivityConfirmationList = oResponseData;
             var viewActivityReportModel = new sap.ui.model.json.JSONModel(that.reportedActivityConfirmationList);
             that.getView().setModel(viewActivityReportModel, 'viewActivityReportModel');
@@ -665,10 +665,10 @@ sap.ui.define(
               Fragment.load({
                 id: oView.getId(),
                 name: 'Kusuma.ext.viewplugins.confirmationPluginV3.view.fragments.ActivityDetails',
-                controller: that
-              }).then(function(oDialog) {
+                controller: that,
+              }).then(function (oDialog) {
                 oDialog.setEscapeHandler(
-                  function(oPromise) {
+                  function (oPromise) {
                     that.onCloseActivityDetailsDialog();
                     oPromise.resolve();
                   }.bind(that)
@@ -687,7 +687,7 @@ sap.ui.define(
             }
             that.byId('activityList').setBusy(false);
           },
-          function(oError, oHttpErrorMessage) {
+          function (oError, oHttpErrorMessage) {
             var err = oError ? oError : oHttpErrorMessage;
             that.showErrorMessage(err, true, true);
             that.reportedActivityConfirmationList = {};
@@ -696,7 +696,7 @@ sap.ui.define(
         );
       },
 
-      onCloseActivityDetailsDialog: function() {
+      onCloseActivityDetailsDialog: function () {
         var oTable = this.getView().byId('ActivityDetailsTable');
         var oColumnListItem = this.getView().byId('ActivityDetailsCLItem');
         var oTableLength = oTable.getColumns().length;
@@ -710,7 +710,7 @@ sap.ui.define(
         this.getView().byId('ActivityDetailsDialog').close();
       },
 
-      formatActivityConfirmationStatus: function(statusKey) {
+      formatActivityConfirmationStatus: function (statusKey) {
         if (!statusKey) {
           return '';
         } else {
@@ -718,7 +718,7 @@ sap.ui.define(
         }
       },
 
-      buildCustomFieldColumns: function(activityDetailsData) {
+      buildCustomFieldColumns: function (activityDetailsData) {
         var customFieldColumns = [];
         var oTable = this.getView().byId('ActivityDetailsTable');
         var oColumnListItem = this.getView().byId('ActivityDetailsCLItem');
@@ -739,15 +739,15 @@ sap.ui.define(
           if (this.oPluginConfiguration && this.oPluginConfiguration[customFieldColumns[k]]) {
             var customFieldValue = 'customFieldValue' + customFieldColumns[k].slice(-1);
             var oColumnListCustomField = new sap.m.Text({
-              text: '{viewActivityReportModel>' + customFieldValue + '}'
+              text: '{viewActivityReportModel>' + customFieldValue + '}',
             });
             oColumnListItem.addCell(oColumnListCustomField);
             var oColumnCustomField = new sap.m.Column({
               hAlign: 'Center',
-              vAlign: 'Middle'
+              vAlign: 'Middle',
             });
             var oHeaderCustomField = new sap.m.Text({
-              text: this.oPluginConfiguration[customFieldColumns[k]]
+              text: this.oPluginConfiguration[customFieldColumns[k]],
             });
             oColumnCustomField.setHeader(oHeaderCustomField);
             oTable.addColumn(oColumnCustomField);
@@ -756,7 +756,7 @@ sap.ui.define(
         oTable.bindItems('viewActivityReportModel>/activityDetails', oColumnListItem, null, null);
       },
 
-      setEmptyResponseToActivityTable: function(oActivityList, oTitleTextControl) {
+      setEmptyResponseToActivityTable: function (oActivityList, oTitleTextControl) {
         this.activityConfirmationPluginList = {};
         oTitleTextControl.setText(this.getI18nText('Activities'));
         var activityConfirmationPluginOverviewModel = new JSONModel();
@@ -764,7 +764,7 @@ sap.ui.define(
         oActivityList.setModel(activityConfirmationPluginOverviewModel);
       },
 
-      onPressReportButton: function(oEvent) {
+      onPressReportButton: function (oEvent) {
         var oView = this.getView();
         this.enableAllowOnlyBaseUoM();
         this.enablePostingDateByConfiguration();
@@ -772,11 +772,11 @@ sap.ui.define(
           Fragment.load({
             id: oView.getId(),
             name: 'Kusuma.ext.viewplugins.confirmationPluginV3.view.fragments.ReportActivity',
-            controller: this
+            controller: this,
           }).then(
-            function(oDialog) {
+            function (oDialog) {
               oDialog.setEscapeHandler(
-                function(oPromise) {
+                function (oPromise) {
                   this.onCloseReportActivityDialog();
                   oPromise.resolve();
                 }.bind(this)
@@ -794,7 +794,7 @@ sap.ui.define(
         setTimeout(this._enableActConfirmButton.bind(this), 500);
       },
 
-      enableAllowOnlyBaseUoM: function() {
+      enableAllowOnlyBaseUoM: function () {
         var oConfiguration = this.oPluginConfiguration;
         this.allowOnlyBaseUoM = false;
         if (oConfiguration && typeof oConfiguration.allowOnlyBaseUoM !== 'undefined') {
@@ -802,7 +802,7 @@ sap.ui.define(
         }
       },
 
-      enablePostingDateByConfiguration: function() {
+      enablePostingDateByConfiguration: function () {
         var oConfiguration = this.oPluginConfiguration;
         this.showPostingDate = true;
         if (oConfiguration && typeof oConfiguration.showPostingDate !== 'undefined') {
@@ -810,14 +810,14 @@ sap.ui.define(
         }
       },
 
-      onCloseReportActivityDialog: function() {
+      onCloseReportActivityDialog: function () {
         sap.ui.getCore().byId('activityFinalConfirmation').setSelected(false);
         this.byId('activityConfirmBtn').setEnabled(false);
         this.customFieldJson = [];
         this.byId('reportActivityDialog').close();
       },
 
-      createFormContent: function(oData) {
+      createFormContent: function (oData) {
         var oView = this.getView();
         var selectedOrder, selectedOperationActivity, selectedBatchID, selectedStepID, selectedWorkcenter;
         var oPodSelectionModel = this.getPodSelectionModel();
@@ -871,16 +871,16 @@ sap.ui.define(
         }
       },
 
-      addFormContentWithSequence: function() {
+      addFormContentWithSequence: function () {
         var oController = this;
-        this.formContent.sort(function(x, y) {
+        this.formContent.sort(function (x, y) {
           var a = x.sequence;
           var b = y.sequence;
           var c = x.activityData.activityId.toUpperCase();
           var d = y.activityData.activityId.toUpperCase();
           return a === b ? (c === d ? 0 : c > d ? 1 : -1) : a > b ? 1 : -1;
         });
-        this.formContent.forEach(function(e) {
+        this.formContent.forEach(function (e) {
           var oData = e.activityData;
           var activityId = oData.activityId;
           var internalUom = oData.targetQuantity.unitOfMeasure.internalUom;
@@ -910,17 +910,20 @@ sap.ui.define(
           }
           var unitList = oController.uomMap[internalUom];
           var oUnitModel = new JSONModel(unitList);
-          sap.ui.getCore().byId('Uom' + activityId).setModel(oUnitModel);
+          sap.ui
+            .getCore()
+            .byId('Uom' + activityId)
+            .setModel(oUnitModel);
         });
       },
 
-      fetchUomAndProceed: function(sUrl, oParameters, oData, iterator) {
+      fetchUomAndProceed: function (sUrl, oParameters, oData, iterator) {
         var that = this;
         that.byId('reportActivityDialog').setBusy(true);
         this.ajaxGetRequest(
           sUrl,
           oParameters,
-          function(oResponseData) {
+          function (oResponseData) {
             var uomList = oResponseData;
             for (var i = 0; i < uomList.length; i++) {
               if (!that.uomMap.hasOwnProperty(uomList[i].internalUom)) {
@@ -935,7 +938,7 @@ sap.ui.define(
               that.byId('reportActivityDialog').setBusy(false);
             }
           },
-          function(oError, oHttpErrorMessage) {
+          function (oError, oHttpErrorMessage) {
             var err = oError ? oError : oHttpErrorMessage;
             that.showErrorMessage(err, true, true);
             that.byId('reportActivityDialog').setBusy(false);
@@ -943,7 +946,7 @@ sap.ui.define(
         );
       },
 
-      createFormContentWithUom: function(oData, iterator) {
+      createFormContentWithUom: function (oData, iterator) {
         var that = this;
         var oView = this.getView();
         var oAcitivityLabelText = Formatter.createActivityLabelForPopup(oData.activityText || oData.activityId, this.getI18nText('Unit'));
@@ -969,30 +972,30 @@ sap.ui.define(
         var oAcitivityInput = new sap.m.Input('InputValue' + oActivityId, {
           textAlign: 'Right',
           change: that.onQuantityLiveChange.bind(that),
-          layoutData: new sap.ui.layout.GridData({ span: SPAN_CONSTANT })
+          layoutData: new sap.ui.layout.GridData({ span: SPAN_CONSTANT }),
         });
         oAcitivityInput.bindProperty('value', {
           parts: [
             { path: 'actPostModel>/activityList/' + iterator + '/quantity/value' },
-            { path: 'actPostModel>/activityList/' + iterator + '/quantity/unitOfMeasure/internalUom' }
+            { path: 'actPostModel>/activityList/' + iterator + '/quantity/unitOfMeasure/internalUom' },
           ],
-          type: new QuantityType()
+          type: new QuantityType(),
         });
         var oAcitivitySelect = new sap.m.Select('Uom' + oActivityId, {
           selectedKey: internalUoM,
           change: that.onChangeUom.bind(that),
           enabled: oAllowUomFlag,
-          layoutData: new sap.ui.layout.GridData({ span: SPAN_CONSTANT })
+          layoutData: new sap.ui.layout.GridData({ span: SPAN_CONSTANT }),
         }).bindAggregation('items', {
           path: '/',
           template: new sap.ui.core.Item({
             key: '{internalUom}',
-            text: '{uom} - {shortText}'
-          })
+            text: '{uom} - {shortText}',
+          }),
         });
         var oRemainingAcitivityLabel = new sap.m.Text({
           text: oRemainingQuantityText,
-          layoutData: new sap.ui.layout.GridData({ span: SPAN_CONSTANT })
+          layoutData: new sap.ui.layout.GridData({ span: SPAN_CONSTANT }),
         });
         var activityObject = {};
         activityObject.oAcitivityLabel = oAcitivityLabel;
@@ -1005,13 +1008,13 @@ sap.ui.define(
         this.activityNeedToCreate--;
       },
 
-      onQuantityLiveChange: function(oEvent) {
+      onQuantityLiveChange: function (oEvent) {
         this.getView().byId('activityConfirmBtn').setEnabled(false);
         // Adding explicit delay because of parellel validation of qty fields
         setTimeout(this._enableActConfirmButton.bind(this), 500);
       },
 
-      _enableActConfirmButton: function() {
+      _enableActConfirmButton: function () {
         var oView = this.getView();
         var isValueExistInAnyInputField = false;
         var isErrorStateExist = false;
@@ -1034,7 +1037,7 @@ sap.ui.define(
         }
       },
 
-      onChangeUom: function(oEvent) {
+      onChangeUom: function (oEvent) {
         var uomFieldId = oEvent.getSource().getId();
         var obj = oEvent.getSource().getSelectedItem().getBindingContext().getObject();
         for (var i = 0; i < this.actPostData.activityList.length; i++) {
@@ -1046,7 +1049,7 @@ sap.ui.define(
         }
       },
 
-      createPostedByAndPostingDateField: function(oData) {
+      createPostedByAndPostingDateField: function (oData) {
         var that = this;
         this.getView().getModel('actPostModel').setProperty('/postingDate', this.getCurrentDateInPlantTimeZone());
         var postedByLabel = new sap.m.Label('postedByLabel', { text: this.getI18nText('PostedBy') });
@@ -1054,7 +1057,7 @@ sap.ui.define(
           enabled: false,
           required: true,
           value: '{actPostModel>/postedBy}',
-          layoutData: new sap.ui.layout.GridData({ span: 'XL6 L6 M6 S6' })
+          layoutData: new sap.ui.layout.GridData({ span: 'XL6 L6 M6 S6' }),
         });
         var postedDateLabel = new sap.m.Label('postingDateLabel', { text: this.getI18nText('PostingDate') });
         var postedDate = new sap.m.DatePicker('postingDate', {
@@ -1062,16 +1065,16 @@ sap.ui.define(
           valueFormat: 'yyyy-MM-dd',
           value: {
             parts: ['actPostModel>/postingDate'],
-            formatter: Formatter.formatDate
+            formatter: Formatter.formatDate,
           },
           layoutData: new sap.ui.layout.GridData({ span: 'XL6 L6 M6 S6' }),
-          change: that.onChangePostingDate.bind(that)
+          change: that.onChangePostingDate.bind(that),
         }).addStyleClass('sapUiSmallMarginBottom');
         var finalConfirmationLabel = new sap.m.Label('finalConfirmationLabel', {
-          text: this.getI18nText('finalConfirmation')
+          text: this.getI18nText('finalConfirmation'),
         });
         var finalConfirmationCheckBox = new sap.m.CheckBox('activityFinalConfirmation', {
-          selected: '{actPostModel>/finalConfirmation}'
+          selected: '{actPostModel>/finalConfirmation}',
         });
 
         finalConfirmationCheckBox.setSelected(false);
@@ -1085,13 +1088,13 @@ sap.ui.define(
         this.byId('reportActivityForm').addContent(postedByInput);
         if (this.oPluginConfiguration && this.oPluginConfiguration.customField1) {
           var customFieldLabel1 = new sap.m.Label('customFieldLabel1', {
-            text: this.oPluginConfiguration.customField1
+            text: this.oPluginConfiguration.customField1,
           });
           var customFieldValue1 = new sap.m.Input('customField1', {
             value: '',
             valueLiveUpdate: true,
             liveChange: that.onCustomFieldLiveChange.bind(that),
-            layoutData: new sap.ui.layout.GridData({ span: 'XL6 L6 M6 S6' })
+            layoutData: new sap.ui.layout.GridData({ span: 'XL6 L6 M6 S6' }),
           });
           this.byId('reportActivityForm').addContent(customFieldLabel1);
           this.byId('reportActivityForm').addContent(customFieldValue1);
@@ -1102,7 +1105,7 @@ sap.ui.define(
         this.byId('reportActivityForm').addContent(finalConfirmationCheckBox);
       },
 
-      onPressConfirmActivityDialog: function() {
+      onPressConfirmActivityDialog: function () {
         // Append Time
         var postedDateTime = this.getCurrentDateInPlantTimeZone() + ' ' + '00' + ':' + '00' + ':' + '00';
         // convert time to UTC
@@ -1117,7 +1120,7 @@ sap.ui.define(
           stepId: this.activityConfirmationPluginList.stepId,
           workCenter: this.activityConfirmationPluginList.workCenter,
 
-          finalConfirmation: this.byId('finalConfirmation').getSelected()
+          finalConfirmation: this.byId('finalConfirmation').getSelected(),
         };
 
         this.dataToBeConfirmed.activityList = [];
@@ -1160,7 +1163,7 @@ sap.ui.define(
         }
       },
 
-      reportActivity: function() {
+      reportActivity: function () {
         var activityConfirmationUrl = this.getActivityConfirmationRestDataSourceUri();
         var sUrl = activityConfirmationUrl + 'activityconfirmation/confirm';
         this.onPressConfirmActivityDialog();
@@ -1169,14 +1172,14 @@ sap.ui.define(
         });
       },
 
-      postActivityData: function(sUrl, oData) {
+      postActivityData: function (sUrl, oData) {
         var that = this;
         //that.byId('activityList').setBusy(true);
         return new Promise((resolve, reject) =>
           this.ajaxPostRequest(
             sUrl,
             oData,
-            function(oResponseData) {
+            function (oResponseData) {
               MessageToast.show(that.getI18nText('POSTING_SUCCESSFUL'));
               that.activityConfirmationPluginList = oResponseData;
               that.publish('refreshPhaseList', { stepId: that.selectedOrderData.stepId, sendToAllPages: true });
@@ -1188,7 +1191,7 @@ sap.ui.define(
               that.activityConfirmationPluginList.phaseEndDate = that.selectedOrderData.actualEndDate;
               that.activityConfirmationPluginList.podType = that.getPodSelectionModel().podType;
               that.activityConfirmationPluginList.isDone = oData.finalConfirmation;
-              that.activityConfirmationPluginList.activitySummary.sort(function(x, y) {
+              that.activityConfirmationPluginList.activitySummary.sort(function (x, y) {
                 var a = x.sequence;
                 var b = y.sequence;
                 var c = x.activityId.toUpperCase();
@@ -1201,7 +1204,7 @@ sap.ui.define(
               that.byId('activityList').setBusy(false);
               resolve();
             },
-            function(oError, oHttpErrorMessage) {
+            function (oError, oHttpErrorMessage) {
               var err = oError ? oError : oHttpErrorMessage;
               that.showErrorMessage(err, true, true);
               that.byId('activityList').setBusy(false);
@@ -1211,8 +1214,8 @@ sap.ui.define(
         );
       },
 
-      createWarningPopUp: function(fnProceed, fnCancel) {
-        this._showMessageBox(function(bProceed) {
+      createWarningPopUp: function (fnProceed, fnCancel) {
+        this._showMessageBox(function (bProceed) {
           if (bProceed) {
             fnProceed();
           } else if (fnCancel) {
@@ -1221,27 +1224,27 @@ sap.ui.define(
         });
       },
 
-      _showMessageBox: function(fnCallback) {
+      _showMessageBox: function (fnCallback) {
         var oWarningMsg = this.getNoYieldWarningMessage();
         MessageBox.warning(oWarningMsg.message, {
           title: 'Warning',
           styleClass: 'sapUiSizeCompact',
           actions: [oWarningMsg.button, MessageBox.Action.CANCEL],
-          onClose: function(oAction) {
+          onClose: function (oAction) {
             fnCallback(oAction === oWarningMsg.button);
-          }
+          },
         });
       },
 
-      getNoYieldWarningMessage: function() {
+      getNoYieldWarningMessage: function () {
         var sWarningMsg = this.getI18nText('noYieldWarningMessage');
         return {
           message: sWarningMsg,
-          button: this.getI18nText('proceed')
+          button: this.getI18nText('proceed'),
         };
       },
 
-      getLoggedInUserAndPlant: function() {
+      getLoggedInUserAndPlant: function () {
         var that = this;
         var oParameters = {};
         var plantUrl = this.getPlantRestDataSourceUri();
@@ -1250,11 +1253,11 @@ sap.ui.define(
         this.ajaxGetRequest(
           sUrl,
           oParameters,
-          function(oResponseData) {
+          function (oResponseData) {
             that.loggedInUser = oResponseData.userId ? oResponseData.userId : '';
             that.byId('activityList').setBusy(false);
           },
-          function(oError, oHttpErrorMessage) {
+          function (oError, oHttpErrorMessage) {
             var err = oError ? oError : oHttpErrorMessage;
             that.showErrorMessage(err, true, true);
             that.byId('activityList').setBusy(false);
@@ -1262,15 +1265,15 @@ sap.ui.define(
         );
       },
 
-      getCurrentDateInPlantTimeZone: function() {
+      getCurrentDateInPlantTimeZone: function () {
         return moment().tz(this.plantTimeZoneId).format('YYYY-MM-DD');
       },
 
-      getCurrentTimeInPlantTimeZone: function() {
+      getCurrentTimeInPlantTimeZone: function () {
         return moment().tz(this.plantTimeZoneId).format('HH:mm:ss');
       },
 
-      formatConfirmationStatus: function(value) {
+      formatConfirmationStatus: function (value) {
         if (!value) {
           return '';
         } else if (value == 'SENT_TO_S4' || value == 'PENDING' || value == 'POSTED_IN_DM') {
@@ -1280,57 +1283,57 @@ sap.ui.define(
         }
       },
 
-      createMessage: function(message, messageType, callback) {
+      createMessage: function (message, messageType, callback) {
         jQuery.sap.require('sap.m.MessageBox');
 
         if (messageType === sap.ui.core.MessageType.Warning) {
           sap.m.MessageBox.confirm(message, {
             title: this.getI18nText('confirmDialogTitle'),
             textDirection: sap.ui.core.TextDirection.Inherit,
-            onClose: function(oAction) {
+            onClose: function (oAction) {
               if (callback && oAction === 'OK') {
                 callback();
               }
-            }
+            },
           });
         } else {
           sap.m.MessageBox.error(message, {
             title: this.getI18nText('errorDialogTitle'),
             textDirection: sap.ui.core.TextDirection.Inherit,
-            onClose: function() {
+            onClose: function () {
               if (callback) {
                 callback();
               }
-            }
+            },
           });
         }
       },
 
-      prepareBusyDialog: function() {
+      prepareBusyDialog: function () {
         if (!this.busyDialog) {
           sap.ui.require(
             ['sap/m/BusyDialog'],
-            function(BusyDialog) {
+            function (BusyDialog) {
               this.busyDialog = new BusyDialog('busyDialogForReasonCode');
             }.bind(this)
           );
         }
       },
 
-      onPhaseSelected: function(sChannelId, sEventId, oData) {
+      onPhaseSelected: function (sChannelId, sEventId, oData) {
         this.page = 0;
         this.resource = oData.resource.resource;
       },
 
-      handleSettingsButtonPressed: function() {
+      handleSettingsButtonPressed: function () {
         this._oTableSettings.openDialog();
       },
 
-      handleSortButtonPressed: function() {
+      handleSortButtonPressed: function () {
         this.createViewSettingsDialog('Kusuma.ext.viewplugins.confirmationPluginV3.view.fragments.SortDialog').open();
       },
 
-      onSortDialogConfirmButtonClicked: function(oEvent) {
+      onSortDialogConfirmButtonClicked: function (oEvent) {
         let oTable = this.byId('postingsTable'),
           mParams = oEvent.getParameters(),
           oBinding = oTable.getBinding('items'),
@@ -1346,7 +1349,7 @@ sap.ui.define(
         oBinding.sort(aSorters);
       },
 
-      createViewSettingsDialog: function(sDialogFragmentName) {
+      createViewSettingsDialog: function (sDialogFragmentName) {
         let oDialog = this._mViewSettingsDialogs[sDialogFragmentName];
 
         if (!oDialog) {
@@ -1357,12 +1360,12 @@ sap.ui.define(
         return oDialog;
       },
 
-      onOperationSelected: function(sChannelId, sEventId, oData) {
+      onOperationSelected: function (sChannelId, sEventId, oData) {
         this.page = 0;
         this.resource = oData.resource.resource;
       },
 
-      getQuantityConfirmationData: function(sChannelId, sEventId, oData) {
+      getQuantityConfirmationData: function (sChannelId, sEventId, oData) {
         var oPodSelectionModel = this.getPodSelectionModel();
         this.plant = this.getPodController().getUserPlant();
         this.resource = oPodSelectionModel.workCenter;
@@ -1378,14 +1381,14 @@ sap.ui.define(
         this.getQuantityConfirmationSummary(this.selectedOrderData);
       },
 
-      errorHandler: function(errorObject) {
+      errorHandler: function (errorObject) {
         this.busyDialog.close();
         if (errorObject) {
           this.createMessage(errorObject.error.message, sap.ui.core.MessageType.Error);
         }
       },
 
-      getQuantityConfirmationSummary: function(oData) {
+      getQuantityConfirmationSummary: function (oData) {
         var productionUrl = this.getProductionDataSourceUri();
         var oParameters = {};
         oParameters.shopOrder = oData.selectedShopOrder;
@@ -1401,7 +1404,7 @@ sap.ui.define(
         this.postFetchQuantityConfirmationData(sUrl, oParameters);
       },
 
-      postFetchQuantityConfirmationData: function(sUrl, oParameters) {
+      postFetchQuantityConfirmationData: function (sUrl, oParameters) {
         var that = this;
         var userAuthFlag = this.selectedOrderData.userAuthorizedForWorkCenter;
         var status = this.selectedOrderData.status;
@@ -1421,7 +1424,7 @@ sap.ui.define(
         that.ajaxGetRequest(
           sUrl,
           oParameters,
-          function(oResponseData) {
+          function (oResponseData) {
             // adding user work center authorization flag to response
             oResponseData.userAuthorizedForWorkCenter = userAuthFlag !== null && userAuthFlag !== undefined ? userAuthFlag : false;
             oResponseData.status = status;
@@ -1444,7 +1447,7 @@ sap.ui.define(
 
             that._setShowFooterToolbar();
           },
-          function(oError, oHttpErrorMessage) {
+          function (oError, oHttpErrorMessage) {
             var err = oError ? oError : oHttpErrorMessage;
             that.showErrorMessage(err, true, true);
             that.quantityConfirmationList = {};
@@ -1452,12 +1455,12 @@ sap.ui.define(
           }
         );
       },
-      _validatePhaseStatus: function() {
+      _validatePhaseStatus: function () {
         if (this.selectedOrderData.status === 'ACTIVE') return true;
         return false;
       },
 
-      onOpenReportQuantityDialog: async function(oEvent) {
+      onOpenReportQuantityDialog: async function (oEvent) {
         var oView = this.getView(),
           oPostModel = oView.getModel('qtyPostModel'),
           oData = this.getView().getModel('quantitiesModel').getData().value[0];
@@ -1474,7 +1477,7 @@ sap.ui.define(
         var oNC = await this._hasNonConformances();
         if (oNC.count > 0) {
           MessageBox.error(this.getI18nText('closeNonConformanceErrMsg'), {
-            details: oNC.formattedText
+            details: oNC.formattedText,
           });
           return;
         }
@@ -1486,12 +1489,12 @@ sap.ui.define(
         }
 
         var sResource = this.selectedOrderData.resource.resource;
-        var bResourceSchedulingRelevant = await this._getResourceWorkcenterData(sResource).then(oResponse=>{
-          let oResource = oResponse[0].members.find(oMember=> oMember.resource.resource === sResource);
-          return oResource.schedulingRelevant
+        var bResourceSchedulingRelevant = await this._getResourceWorkcenterData(sResource).then((oResponse) => {
+          let oResource = oResponse[0].members.find((oMember) => oMember.resource.resource === sResource);
+          return oResource.schedulingRelevant;
         });
 
-        if(!bResourceSchedulingRelevant){
+        if (!bResourceSchedulingRelevant) {
           MessageBox.error(this.getI18nText('workcenterResourceIsNotOEERelevant'));
           return;
         }
@@ -1518,7 +1521,7 @@ sap.ui.define(
         var erpAutoGr = false;
         var stepId = this.selectedOrderData.stepId;
         if (this.selectedOrderData.recipeArray && this.selectedOrderData.recipeArray.length) {
-          this.selectedOrderData.recipeArray.some(function(recipe) {
+          this.selectedOrderData.recipeArray.some(function (recipe) {
             if (recipe.stepId == stepId) {
               if (recipe.recipeOperation) {
                 erpAutoGr = recipe.recipeOperation.erpAutoGr;
@@ -1544,20 +1547,20 @@ sap.ui.define(
         this.ajaxGetRequest(
           surl,
           oParameters,
-          function(unitData) {
+          function (unitData) {
             sap.ui.getCore().getMessageManager().removeAllMessages();
-            var unitList = unitData.map(function(unit) {
+            var unitList = unitData.map(function (unit) {
               return {
                 value: unit.uom,
                 internalUom: unit.internalUom,
-                text: unit.shortText
+                text: unit.shortText,
               };
             });
             that.unitList = unitList;
             that.getView().setModel(new JSONModel(unitList), 'unitModel');
             that.getView().setBusy(false);
           },
-          function(oError, sHttpErrorMessage) {
+          function (oError, sHttpErrorMessage) {
             that.getView().setBusy(false);
           }
         );
@@ -1570,7 +1573,7 @@ sap.ui.define(
         this.ajaxGetRequest(
           sUrl,
           oParameters,
-          function(oResponseData) {
+          function (oResponseData) {
             var uomList = oResponseData;
             for (var i = 0; i < uomList.length; i++) {
               if (!that.uomMap.hasOwnProperty(uomList[i].internalUom)) {
@@ -1583,7 +1586,7 @@ sap.ui.define(
             //   that.byId("uom").setSelectedKey(that.activityConfirmationPluginList.activitySummary[0].targetQuantity.unitOfMeasure.internalUom);
             //  }
           },
-          function(oError, oHttpErrorMessage) {
+          function (oError, oHttpErrorMessage) {
             var err = oError ? oError : oHttpErrorMessage;
             that.showErrorMessage(err, true, true);
             that.byId('reportActivityDialog').setBusy(false);
@@ -1604,11 +1607,11 @@ sap.ui.define(
           Fragment.load({
             id: oView.getId(),
             name: 'Kusuma.ext.viewplugins.confirmationPluginV3.view.fragments.ReportQuantity',
-            controller: this
+            controller: this,
           }).then(
-            function(oDialog) {
+            function (oDialog) {
               oDialog.setEscapeHandler(
-                function(oPromise) {
+                function (oPromise) {
                   this.onCloseReportQuantityDialog();
                   oPromise.resolve();
                 }.bind(this)
@@ -1676,7 +1679,7 @@ sap.ui.define(
         sap.ui.getCore().getMessageManager().removeAllMessages();
       },
 
-      onOpenViewQuantityReportDialog: function(init) {
+      onOpenViewQuantityReportDialog: function (init) {
         var oParameters = {};
         oParameters.shopOrder = this.oParameters.shopOrder;
         oParameters.batchId = this.oParameters.batchId;
@@ -1696,7 +1699,7 @@ sap.ui.define(
         this.postFetchReportedQuantityConfirmationData(sUrl, oParameters, init);
       },
 
-      postFetchReportedQuantityConfirmationData: function(sUrl, oParameters, init) {
+      postFetchReportedQuantityConfirmationData: function (sUrl, oParameters, init) {
         var that = this;
         var oView = this.getView();
         that.byId('postingsTable').setBusyIndicatorDelay(0);
@@ -1704,7 +1707,7 @@ sap.ui.define(
         this.ajaxGetRequest(
           sUrl,
           oParameters,
-          function(oResponseData) {
+          function (oResponseData) {
             let oList = oResponseData.details.content;
             for (var i = 0; i < oList.length; i++) {
               // date time is in UTC
@@ -1729,12 +1732,12 @@ sap.ui.define(
             that._oTable = that.byId('postingsTable');
             let iCurrCount = tableModel.getData().length;
             if (iCurrCount === +iTotalCount) {
-              that._oTable.getBindingInfo('items').binding.isLengthFinal = function() {
+              that._oTable.getBindingInfo('items').binding.isLengthFinal = function () {
                 return true;
               };
               that._oTable.setGrowingTriggerText('');
             } else {
-              that._oTable.getBindingInfo('items').binding.isLengthFinal = function() {
+              that._oTable.getBindingInfo('items').binding.isLengthFinal = function () {
                 return false;
               };
               let sGrowingTriggerText = that.getI18nText('eventTable.growingTriggerText', [iCurrCount, iTotalCount]);
@@ -1743,7 +1746,7 @@ sap.ui.define(
             that.byId('postingsTable').setBusy(false);
             that.getView().setBusy(false);
           },
-          function(oError, oHttpErrorMessage) {
+          function (oError, oHttpErrorMessage) {
             var err = oError ? oError : oHttpErrorMessage;
             that.showErrorMessage(err, true, true);
             that.quantityConfirmationList = {};
@@ -1753,7 +1756,7 @@ sap.ui.define(
         );
       },
 
-      onCloseQuantityReportDialog: function() {
+      onCloseQuantityReportDialog: function () {
         var oTable = this.getView().byId('ViewQuantityReportTable');
         var oDetialsColumnItem = this.getView().byId('QuantityDetailsCLItem');
         var oTableLength = oTable.getColumns().length;
@@ -1767,7 +1770,7 @@ sap.ui.define(
         this.getView().byId('ViewQuantityReportDialog').close();
       },
 
-      handleReasonCode: function() {
+      handleReasonCode: function () {
         var that = this;
 
         //Load the fragment
@@ -1780,14 +1783,14 @@ sap.ui.define(
           this.getView().addDependent(this.selectReasonCodeDialog);
         }
 
-        setTimeout(function() {
+        setTimeout(function () {
           that.prepareReasonCodeTable();
           var dialogForSelectCode = sap.ui.getCore().byId(sap.ui.core.Fragment.createId('selectReasonCodeDialog', 'dialogForSelectCode'));
           dialogForSelectCode.setBusy(false);
           that.selectReasonCodeDialog.open();
         });
       },
-      handleSearchForReasonCodeDialog: function(oEvent) {
+      handleSearchForReasonCodeDialog: function (oEvent) {
         var properties = ['ID', 'description', 'reasonForVariance'];
         var oValue = oEvent.getSource().getValue();
         var resourceList = sap.ui
@@ -1797,7 +1800,7 @@ sap.ui.define(
 
         this.handleSearch(oValue, properties, resourceList);
       },
-      handleSearchForReasonCodeUpdateDialog: function(oEvent) {
+      handleSearchForReasonCodeUpdateDialog: function (oEvent) {
         let oValue = oEvent.getSource().getValue();
         let reasonCodeTable = this.updateReasonCodeDialog.getContent()[0];
         if (!oValue) {
@@ -1805,12 +1808,12 @@ sap.ui.define(
         } else {
           let list = this.matchTreeData(this.allList.timeElementReasonCodeTree, oValue);
           reasonCodeTable.getModel('oReasonCodeModel').setData({
-            timeElementReasonCodeTree: list
+            timeElementReasonCodeTree: list,
           });
           reasonCodeTable.expandToLevel(10);
         }
       },
-      handleSearchForReasonCodeSearch: function(oEvent) {
+      handleSearchForReasonCodeSearch: function (oEvent) {
         var clearButtonPressed = oEvent.getParameters('clearButtonPressed');
         if (clearButtonPressed) {
           var oView = this.getView();
@@ -1821,7 +1824,7 @@ sap.ui.define(
           oView.getModel('qtyPostModel').refresh();
         }
       },
-      prepareReasonCodeTable: function() {
+      prepareReasonCodeTable: function () {
         var oReasonCodeModel, reasonCodeTable;
 
         if (this.listOfTimeElementAndDesc) {
@@ -1852,7 +1855,7 @@ sap.ui.define(
               }
               reasonCodeTable = sap.ui.getCore().byId(sap.ui.core.Fragment.createId('selectReasonCodeDialog', 'reasonCodeTreeTable'));
               oReasonCodeModel.setData({
-                timeElementReasonCodeTree: arr
+                timeElementReasonCodeTree: arr,
               });
               reasonCodeTable.getModel('oReasonCodeModel').checkUpdate();
             } else {
@@ -1867,7 +1870,7 @@ sap.ui.define(
           }
         }
       },
-      appendReasonCode: function(elem) {
+      appendReasonCode: function (elem) {
         this.rCodeString = '';
         for (var i = 0; i < 8; i++) {
           var rCode = elem['reasonCode' + (i + 1)];
@@ -1877,7 +1880,7 @@ sap.ui.define(
         }
         return this.rCodeString;
       },
-      assignedCodeSelectionLoop: function(obj) {
+      assignedCodeSelectionLoop: function (obj) {
         for (var k in obj) {
           if (obj[k].description != null) {
             this.path.push(obj[k]);
@@ -1887,7 +1890,7 @@ sap.ui.define(
         }
       },
 
-      transformData: function(dataObject) {
+      transformData: function (dataObject) {
         var transformedDataObject, oIndex;
         var transformedArray = [];
         this.leafs = [];
@@ -1921,7 +1924,7 @@ sap.ui.define(
           return transformedArray;
         }
       },
-      getReasonCodeObject: function(object, transformedDataObject) {
+      getReasonCodeObject: function (object, transformedDataObject) {
         var nestedReasonCodeObject;
         if (object.resourceReasonCodeNodeCollection.length > 0) {
           nestedReasonCodeObject = this.getNestedReasonCodeObject(object.resourceReasonCodeNodeCollection);
@@ -1930,7 +1933,7 @@ sap.ui.define(
         return transformedDataObject;
       },
 
-      getReasonCodeID: function(reasonCodeObject) {
+      getReasonCodeID: function (reasonCodeObject) {
         var stringBuilder, oIndex;
         if (reasonCodeObject) {
           for (oIndex = 10; oIndex > 0; oIndex--) {
@@ -1943,7 +1946,7 @@ sap.ui.define(
         }
       },
 
-      getNestedReasonCodeObject: function(reasonCodeNestedObject) {
+      getNestedReasonCodeObject: function (reasonCodeNestedObject) {
         var transformedNestedArray = [];
         if (reasonCodeNestedObject) {
           reasonCodeNestedObject.typeOfData = 'reasonCodeObject';
@@ -1952,7 +1955,7 @@ sap.ui.define(
         return transformedNestedArray;
       },
 
-      getReasonCodesForTimeElement: function() {
+      getReasonCodesForTimeElement: function () {
         var reasonCodeNestedObject, oUrl, reasonCodeTable;
         oUrl =
           this.getPlantRestDataSourceUri() +
@@ -1965,32 +1968,32 @@ sap.ui.define(
         this.ajaxGetRequest(
           oUrl,
           null,
-          function(oData) {
+          function (oData) {
             this.reasonTree = oData.resourceReasonCodeNodeCollection;
           }.bind(this),
-          function(errorObject) {
+          function (errorObject) {
             this.errorHandler(errorObject);
           }.bind(this)
         );
         $.ajaxSettings.async = true;
       },
-      getReasonCodesForChild: function(ref, code) {
+      getReasonCodesForChild: function (ref, code) {
         var reasonCodeNestedObject, oUrl, reasonCodeTable;
         oUrl = this.getPlantRestDataSourceUri() + 'resourceReasonCodes?timeElement.ref=' + ref + code;
         $.ajaxSettings.async = false;
         this.ajaxGetRequest(
           oUrl,
           null,
-          function(oData) {
+          function (oData) {
             this.child = oData;
           }.bind(this),
-          function(errorObject) {
+          function (errorObject) {
             this.errorHandler(errorObject);
           }.bind(this)
         );
         $.ajaxSettings.async = true;
       },
-      getReasonCodesForTimeElementForNotSource: function(inputObject) {
+      getReasonCodesForTimeElementForNotSource: function (inputObject) {
         var reasonCodeNestedObject, oUrl, reasonCodeTable;
         oUrl =
           this.getPlantRestDataSourceUri() + 'resourceReasonCodes?timeElement.ref=' + jQuery.sap.encodeURL(inputObject.timeElementHandle);
@@ -1998,21 +2001,21 @@ sap.ui.define(
         this.ajaxGetRequest(
           oUrl,
           null,
-          function(oData) {
+          function (oData) {
             oData.typeOfData = 'reasonCodeObject';
             reasonCodeNestedObject = this.transformData(oData);
             inputObject.timeElementReasonCodeTree = reasonCodeNestedObject;
             reasonCodeTable = sap.ui.getCore().byId(sap.ui.core.Fragment.createId('selectReasonCodeDialog', 'reasonCodeTreeTable'));
             reasonCodeTable.getModel('oReasonCodeModel').checkUpdate();
           }.bind(this),
-          function(errorObject) {
+          function (errorObject) {
             this.errorHandler(errorObject);
           }.bind(this)
         );
         $.ajaxSettings.async = true;
       },
 
-      getReasonCodesForTimeElementForNotSourceForUpdate: function(inputObject, reasonCodeTable) {
+      getReasonCodesForTimeElementForNotSourceForUpdate: function (inputObject, reasonCodeTable) {
         let reasonCodeNestedObject, oUrl;
         oUrl =
           this.getPlantRestDataSourceUri() + 'resourceReasonCodes?timeElement.ref=' + jQuery.sap.encodeURL(inputObject.timeElementHandle);
@@ -2020,37 +2023,37 @@ sap.ui.define(
         this.ajaxGetRequest(
           oUrl,
           null,
-          function(oData) {
+          function (oData) {
             oData.typeOfData = 'reasonCodeObject';
             reasonCodeNestedObject = this.transformData(oData);
             inputObject.timeElementReasonCodeTree = reasonCodeNestedObject;
             reasonCodeTable.getModel('oReasonCodeModel').checkUpdate();
           }.bind(this),
-          function(errorObject) {
+          function (errorObject) {
             this.errorHandler(errorObject);
           }.bind(this)
         );
         $.ajaxSettings.async = true;
       },
 
-      callServiceForTimeElementDesc: function() {
+      callServiceForTimeElementDesc: function () {
         var oUrl =
           this.getPlantRestDataSourceUri() + 'timeElements/findByType/TimeElementTypeBO:' + this.plant + ',QUAL_LOSS?status=ENABLED';
         // this.busyDialog.open();
         this.ajaxGetRequest(
           oUrl,
           null,
-          function(oData) {
+          function (oData) {
             this.listOfTimeElementAndDesc = oData;
             // this.busyDialog.close();
           }.bind(this),
-          function(errorObject) {
+          function (errorObject) {
             this.errorHandler(errorObject);
           }.bind(this)
         );
       },
 
-      handleSearchForReasonCodeDialog: function(oEvent) {
+      handleSearchForReasonCodeDialog: function (oEvent) {
         var properties = ['ID', 'description', 'reasonForVariance'];
         var oValue = oEvent.getSource().getValue();
         var resourceList = sap.ui
@@ -2061,7 +2064,7 @@ sap.ui.define(
         this.handleSearch(oValue, properties, resourceList);
       },
 
-      handleSearch: function(oValue, propertiesArray, oBinding) {
+      handleSearch: function (oValue, propertiesArray, oBinding) {
         var reasonCodeTable = sap.ui.getCore().byId(sap.ui.core.Fragment.createId('selectReasonCodeDialog', 'reasonCodeTreeTable'));
 
         if (!oValue) {
@@ -2069,19 +2072,19 @@ sap.ui.define(
         } else {
           var list = this.matchTreeData(this.allList.timeElementReasonCodeTree, oValue);
           reasonCodeTable.getModel('oReasonCodeModel').setData({
-            timeElementReasonCodeTree: list
+            timeElementReasonCodeTree: list,
           });
           reasonCodeTable.expandToLevel(10);
         }
       },
 
-      onSelectReasonCode: function() {
+      onSelectReasonCode: function () {
         var oTable, oPath, selectedObject, oSaveButton, oIndices;
         oTable = sap.ui.getCore().byId(sap.ui.core.Fragment.createId('selectReasonCodeDialog', 'reasonCodeTreeTable'));
         oSaveButton = sap.ui.getCore().byId(sap.ui.core.Fragment.createId('selectReasonCodeDialog', 'saveButton'));
         oIndices = oTable.getSelectedIndices();
         if (oIndices.length >= 1) {
-          jQuery.each(oIndices, function(oIndex, oObj) {
+          jQuery.each(oIndices, function (oIndex, oObj) {
             oPath = oTable.getContextByIndex(oObj).sPath;
             selectedObject = oTable.getModel('oReasonCodeModel').getProperty(oPath);
             if (selectedObject.timeElementReasonCodeTree) {
@@ -2095,10 +2098,10 @@ sap.ui.define(
         }
       },
 
-      matchTreeData: function(arr, searchCon) {
+      matchTreeData: function (arr, searchCon) {
         var newArr = [];
         var searchNameList = ['description', 'ID', 'reasonForVariance'];
-        arr.forEach(item => {
+        arr.forEach((item) => {
           for (var i = 0, len = searchNameList.length; i < len; i++) {
             var nameKey = searchNameList[i];
             if (item.hasOwnProperty(nameKey)) {
@@ -2123,12 +2126,12 @@ sap.ui.define(
         return newArr;
       },
 
-      onClickSave: function(oEvent) {
+      onClickSave: function (oEvent) {
         var selectedObjects, oMinLevelSelected, oIndex;
         var reasonCodesToBeAssigned = [];
         selectedObjects = this.getSelectedObjects();
         if (selectedObjects.length > 0) {
-          selectedObjects.sort(function(a, b) {
+          selectedObjects.sort(function (a, b) {
             return a.level - b.level;
           });
           oMinLevelSelected = selectedObjects[0].level;
@@ -2149,7 +2152,7 @@ sap.ui.define(
         oEvent.getSource().getParent().close();
       },
 
-      onClickCancel: function(oEvent) {
+      onClickCancel: function (oEvent) {
         // Clear Search Bar value on Reason Code Dialog - if any
         if (this.selectReasonCodeDialog) {
           sap.ui.getCore().byId(sap.ui.core.Fragment.createId('selectReasonCodeDialog', 'searchBarReasonCode')).setValue('');
@@ -2162,7 +2165,7 @@ sap.ui.define(
         oEvent.getSource().getParent().close();
       },
 
-      getSelectedObjects: function() {
+      getSelectedObjects: function () {
         var oTable, oSelectedIndices, oIndex, oPath, selectedObject;
         var selectedObjects = [];
         oTable = sap.ui.getCore().byId(sap.ui.core.Fragment.createId('selectReasonCodeDialog', 'reasonCodeTreeTable'));
@@ -2178,7 +2181,7 @@ sap.ui.define(
         return selectedObjects;
       },
 
-      updateReasonCodeObject: function(objectsforComparison, finalReasonCodeObject) {
+      updateReasonCodeObject: function (objectsforComparison, finalReasonCodeObject) {
         var oIndex;
         if (objectsforComparison.length > 0) {
           for (oIndex = 0; oIndex < finalReasonCodeObject.length; oIndex++) {
@@ -2210,7 +2213,7 @@ sap.ui.define(
         }
       },
 
-      prepareAssignReasonCodeRequest: function(reasonCodeToBeAssigned, machineCodeSave) {
+      prepareAssignReasonCodeRequest: function (reasonCodeToBeAssigned, machineCodeSave) {
         var reasonCodeKey = reasonCodeToBeAssigned[0].reasonCodeHandle.split(',');
         this.getView().getModel('qtyPostModel').setProperty('/reasonCodeKey', reasonCodeKey[1]);
         this.getView().getModel('qtyPostModel').setProperty('/description', reasonCodeToBeAssigned[0].description);
@@ -2220,10 +2223,10 @@ sap.ui.define(
         var that = this;
 
         if (reasonCodeToBeAssigned.length > 0) {
-          jQuery.each(reasonCodeToBeAssigned, function(oIndex, oObject) {
+          jQuery.each(reasonCodeToBeAssigned, function (oIndex, oObject) {
             dummyObject = {
               resource: {},
-              resourceReasonCode: {}
+              resourceReasonCode: {},
             };
             dummyObject.resourceReasonCode.ref = oObject.reasonCodeHandle;
             dummyObject.resource.ref = that.selectedResourceRef;
@@ -2234,7 +2237,7 @@ sap.ui.define(
         }
       },
 
-      prepareDataForBinding: function(data) {
+      prepareDataForBinding: function (data) {
         var transformedObject;
         if (data) {
           data.typeOfData = 'timeElementObject';
@@ -2243,7 +2246,7 @@ sap.ui.define(
         }
       },
 
-      onCloseReportQuantityDialog: function() {
+      onCloseReportQuantityDialog: function () {
         // sap.ui.getCore().byId('activityFinalConfirmation').setSelected(false);
         this.getView().byId('reportQuantityDialog').close();
 
@@ -2282,7 +2285,7 @@ sap.ui.define(
           var oItem = aItems[i];
           var aCells = oItem.getCells();
 
-          aCells.forEach(function(oCell) {
+          aCells.forEach(function (oCell) {
             if (oCell instanceof sap.m.Input) {
               oCell.setValue(''); // Clear the input field
             }
@@ -2291,9 +2294,9 @@ sap.ui.define(
       },
 
       /***
-         * Reset the input fields
-         */
-      _resetFields: function() {
+       * Reset the input fields
+       */
+      _resetFields: function () {
         this.byId('yieldQuantity').setValue('');
         this.byId('batchNumberFilter').setValue('');
         this.byId('storageLocationFilter').setValue('');
@@ -2312,12 +2315,12 @@ sap.ui.define(
         ErrorHandler.clearErrorState(this.byId('postedBy'));
         ErrorHandler.clearErrorState(this.byId('postingDate'));
       },
-      onYieldQuantityChange: function(oEvent) {
+      onYieldQuantityChange: function (oEvent) {
         var oInput = oEvent.getSource();
         var oTable = this.byId('activity');
         var aItems = oTable.getItems();
 
-        aItems.forEach(function(oItem) {
+        aItems.forEach(function (oItem) {
           var aCells = oItem.getCells();
           var oYieldInput = aCells[0];
           var oUpdateInput = aCells[1];
@@ -2332,7 +2335,7 @@ sap.ui.define(
         console.log('Updated the corresponding fields and set them to non-editable.');
       },
 
-      onYieldQuantityLiveChange: function(oEvent) {
+      onYieldQuantityLiveChange: function (oEvent) {
         var oView = this.getView(),
           oPostModel = oView.getModel('qtyPostModel'),
           value = oEvent.getSource().getValue();
@@ -2353,12 +2356,12 @@ sap.ui.define(
 
         var oParameters = {
           plant: this.getPodController().getUserPlant(),
-          userId: this.getGlobalProperty('loggedInUserDetails').userId
+          userId: this.getGlobalProperty('loggedInUserDetails').userId,
         };
         this.ajaxGetRequest(
           sUrl,
           oParameters,
-          function(oResponseData) {
+          function (oResponseData) {
             if (oResponseData.supervisedUserIds.length === 0) {
               for (var i = 0; i < aItems.length; i++) {
                 var oRow = aItems[i];
@@ -2375,7 +2378,7 @@ sap.ui.define(
               }
             }
           },
-          function(oError, sHttpErrorMessage) {
+          function (oError, sHttpErrorMessage) {
             console.error('Error fetching data:', error);
             //that.handleErrorMessage(oError, sHttpErrorMessage);
           }
@@ -2399,7 +2402,7 @@ sap.ui.define(
 
           if (!isNaN(fStandardValue)) {
             var oconvertstvalue = fStandardValue * 60;
-            var fResult = oconvertstvalue / totalqty * (fYieldValue + fscrapValue);
+            var fResult = (oconvertstvalue / totalqty) * (fYieldValue + fscrapValue);
             var converttounit = fResult / 60;
             oUpdateInput.setValue(converttounit.toFixed(2)); // Display result with 2 decimal places
             //oUpdateInput.setEditable(false); // Make it non-editable after update
@@ -2424,7 +2427,7 @@ sap.ui.define(
         }
       },
 
-      onChangePostingDate: function(oEvent) {
+      onChangePostingDate: function (oEvent) {
         var inputFieldId = oEvent.getSource().getId();
         var inputPostingDate = oEvent.getSource().getValue();
         ErrorHandler.clearErrorState(oEvent.getSource());
@@ -2437,7 +2440,7 @@ sap.ui.define(
         }
       },
 
-      selectUom: function(oEvent, type) {
+      selectUom: function (oEvent, type) {
         if (!this.byId('yieldQuantity').getValue() && !this.byId('scrapQuantity').getValue()) {
           this.byId('quantityConfirmBtn').setEnabled(false);
         } else {
@@ -2445,7 +2448,7 @@ sap.ui.define(
         }
       },
 
-      onScrapQuantityLiveChange: function(oEvent) {
+      onScrapQuantityLiveChange: function (oEvent) {
         var oView = this.getView(),
           oPostModel = oView.getModel('qtyPostModel'),
           value = oEvent.getSource().getValue();
@@ -2466,12 +2469,12 @@ sap.ui.define(
 
         var oParameters = {
           plant: this.getPodController().getUserPlant(),
-          userId: this.getGlobalProperty('loggedInUserDetails').userId
+          userId: this.getGlobalProperty('loggedInUserDetails').userId,
         };
         this.ajaxGetRequest(
           sUrl,
           oParameters,
-          function(oResponseData) {
+          function (oResponseData) {
             if (oResponseData.supervisedUserIds.length === 0) {
               for (var i = 0; i < aItems.length; i++) {
                 var oRow = aItems[i];
@@ -2488,7 +2491,7 @@ sap.ui.define(
               }
             }
           },
-          function(oError, sHttpErrorMessage) {
+          function (oError, sHttpErrorMessage) {
             console.error('Error fetching data:', error);
             //that.handleErrorMessage(oError, sHttpErrorMessage);
           }
@@ -2508,7 +2511,7 @@ sap.ui.define(
 
           if (!isNaN(fStandardValue)) {
             var oconvertstvalue = fStandardValue * 60;
-            var fResult = oconvertstvalue / totalqty * (fYieldValue + fscrapValue);
+            var fResult = (oconvertstvalue / totalqty) * (fYieldValue + fscrapValue);
             var converttounit = fResult / 60;
             oUpdateInput.setValue(converttounit.toFixed(2)); // Display result with 2 decimal places
             //oUpdateInput.setEditable(false); // Make it non-editable after update
@@ -2531,13 +2534,13 @@ sap.ui.define(
           }
         }
       },
-      onValidate: function() {
+      onValidate: function () {
         var oTable = this.byId('activity');
         var aItems = oTable.getItems();
         var bAnyValuePresent = false;
 
         // Check for any non-empty input field
-        aItems.forEach(function(oItem) {
+        aItems.forEach(function (oItem) {
           var oInput = oItem.getCells()[1]; // Assuming the second cell contains the Input field
           var sValue = oInput.getValue();
 
@@ -2547,7 +2550,7 @@ sap.ui.define(
         });
 
         // Set value state based on bAnyValuePresent
-        aItems.forEach(function(oItem) {
+        aItems.forEach(function (oItem) {
           var oInput = oItem.getCells()[1]; // Assuming the second cell contains the Input field
           if (!bAnyValuePresent) {
             oInput.setValueState('Error');
@@ -2560,7 +2563,7 @@ sap.ui.define(
         return bAnyValuePresent;
       },
 
-      onConfirm: function() {
+      onConfirm: function () {
         if (ErrorHandler.hasErrors()) {
           return;
         }
@@ -2604,7 +2607,7 @@ sap.ui.define(
         var totalYieldQuantity = 0;
 
         // Iterate through the data and sum the yield quantities
-        oModelData.forEach(function(item) {
+        oModelData.forEach(function (item) {
           // Assuming yield quantity is stored in the 'yieldQuantity' property
           var yieldQuantity = parseFloat(item.totalYieldQuantity.value);
           var ScrapQuantity = parseFloat(item.totalScrapQuantity.value);
@@ -2644,10 +2647,10 @@ sap.ui.define(
         var that = this;
         this.qtyPostData.scrapQuantity.unitOfMeasure.uom = this.byId('uomScrap').getSelectedKey();
         this.qtyPostData.yieldQuantity.unitOfMeasure.uom = this.byId('uomYield').getSelectedKey();
-        this.qtyPostData.scrapQuantity.unitOfMeasure.internalUom = this.unitList.filter(function(v) {
+        this.qtyPostData.scrapQuantity.unitOfMeasure.internalUom = this.unitList.filter(function (v) {
           return v.value === that.byId('uomScrap').getSelectedKey();
         })[0].internalUom;
-        this.qtyPostData.yieldQuantity.unitOfMeasure.internalUom = this.unitList.filter(function(v) {
+        this.qtyPostData.yieldQuantity.unitOfMeasure.internalUom = this.unitList.filter(function (v) {
           return v.value === that.byId('uomYield').getSelectedKey();
         })[0].internalUom;
         if (!this.qtyPostData.yieldQuantity.value && !this.qtyPostData.scrapQuantity.value) {
@@ -2691,16 +2694,16 @@ sap.ui.define(
         // this.postGrData(sUrl, this.qtyPostData);
 
         //  this.onCloseReportQuantityDialog();
-        Promise.all([this.reportQuantity(), this.reportActivity()]).then(aResponse => {
+        Promise.all([this.reportQuantity(), this.reportActivity()]).then((aResponse) => {
           if (this.phaseControlKey === 'ZM01' && this.qtyPostData.finalConfirmation) {
-            this._postConfirmationNonMilestone().then(oResponse => {
+            this._postConfirmationNonMilestone().then((oResponse) => {
               this.publish('refreshPhaseList', {});
             });
           }
         });
       },
 
-      reportQuantity: async function() {
+      reportQuantity: async function () {
         var productionUrl = this.getProductionDataSourceUri();
         var sUrl = productionUrl + 'quantityConfirmation/confirm';
         return this.postGrData(sUrl, this.qtyPostData);
@@ -2735,10 +2738,10 @@ sap.ui.define(
       //   );
       // },
 
-      postGrData: function(sUrl, oRequestData) {
+      postGrData: function (sUrl, oRequestData) {
         var that = this;
         return new Promise((resolve, reject) => this.ajaxPostRequest(sUrl, oRequestData, resolve, reject))
-          .then(oResponseData => {
+          .then((oResponseData) => {
             that.getQuantityConfirmationSummary(that.selectedOrderData);
             that.publish('refreshPhaseList', { stepId: that.selectedOrderData.stepId });
             that.publish('phaseStartEvent', that);
@@ -2755,7 +2758,7 @@ sap.ui.define(
           });
       },
 
-      onConfPluginSave: function() {
+      onConfPluginSave: function () {
         if (ErrorHandler.hasErrors()) {
           return;
         }
@@ -2764,7 +2767,7 @@ sap.ui.define(
         // this.reportConfirmation();
       },
 
-      reportConfirmation: function() {
+      reportConfirmation: function () {
         var oPayload = {
           dmConfirmation: 0,
           dmActCounter: 0,
@@ -2791,8 +2794,8 @@ sap.ui.define(
             WorkQuantityUnit5Isocode: '',
             OpConfirmedWorkQuantity5: 0,
             WorkQuantityUnit6Isocode: '',
-            OpConfirmedWorkQuantity6: 0
-          }
+            OpConfirmedWorkQuantity6: 0,
+          },
         };
 
         var aActivityList = this.actPostData.activityList;
@@ -2805,16 +2808,17 @@ sap.ui.define(
         this.ajaxPostRequest(
           sUrl,
           oPayload,
-          function(oResponse) {
+          function (oResponse) {
             console.log(oResponse);
           }.bind(this)
-        ), function(oError, oHttpErrorMessage) {
-          var err = oError ? oError : oHttpErrorMessage;
-          that.showErrorMessage(err, true, true);
-        };
+        ),
+          function (oError, oHttpErrorMessage) {
+            var err = oError ? oError : oHttpErrorMessage;
+            that.showErrorMessage(err, true, true);
+          };
       },
 
-      onReasonCodePress: function(oEvent) {
+      onReasonCodePress: function (oEvent) {
         let source = oEvent.getSource();
         let oContext = source.getBindingContext('viewQuantityReportModel').getObject();
 
@@ -2824,28 +2828,28 @@ sap.ui.define(
         let that = this;
         // Open popover to display path for assigned reason code
         return this.loadReasonCodePopover()
-          .then(oPopover => {
+          .then((oPopover) => {
             oPopover.openBy(source).setBusy(true);
             that
               .getReasonCodeDetail(sReasonCodeRef)
-              .then(oData => {
+              .then((oData) => {
                 oPopover.getModel().setData(oData);
                 oPopover.setBusy(false);
               })
-              .catch(oError => {
+              .catch((oError) => {
                 MessageBox.error(oError.message);
                 oPopover.setBusy(false).close();
               });
           })
-          .catch(oError => {
+          .catch((oError) => {
             MessageBox.error(oError.message);
           });
       },
 
-      loadReasonCodePopover: function() {
+      loadReasonCodePopover: function () {
         if (!this.oReasonCodePopoverPromise) {
           let sFragment = 'Kusuma.ext.viewplugins.confirmationPluginV3.view.fragments.ReasonCodePopover';
-          this.oReasonCodePopoverPromise = this.loadFragment('reasonCodePopover', sFragment, this).then(oPopover => {
+          this.oReasonCodePopoverPromise = this.loadFragment('reasonCodePopover', sFragment, this).then((oPopover) => {
             this.getView().addDependent(oPopover);
             oPopover.setModel(new sap.ui.model.json.JSONModel());
             return oPopover;
@@ -2854,15 +2858,15 @@ sap.ui.define(
         return this.oReasonCodePopoverPromise;
       },
 
-      loadFragment: function(sId, sFragment, oContext) {
+      loadFragment: function (sId, sFragment, oContext) {
         return Fragment.load({
           id: sId,
           name: sFragment,
-          controller: oContext
+          controller: oContext,
         });
       },
 
-      handleReasonCodeUpdateFromPopover: function(event) {
+      handleReasonCodeUpdateFromPopover: function (event) {
         let that = this;
         if (!this.listOfTimeElementAndDesc) {
           this.callServiceForTimeElementDesc();
@@ -2876,12 +2880,12 @@ sap.ui.define(
           this.getView().addDependent(this.updateReasonCodeDialog);
         }
         this.updateReasonCodeDialog.open();
-        setTimeout(function() {
+        setTimeout(function () {
           that.prepareReasonCodeTableForUpdate();
         }, 1000);
       },
 
-      onSelectReasonCodeForUpdate: function() {
+      onSelectReasonCodeForUpdate: function () {
         let oUpdateReasonCodeTable, oPath, selectedObject, oSaveButton, oIndices;
         oUpdateReasonCodeTable = this.updateReasonCodeDialog.getContent()[0];
         oSaveButton = this.updateReasonCodeDialog.mAggregations.beginButton;
@@ -2901,14 +2905,14 @@ sap.ui.define(
         }
       },
 
-      onClickUpdateReasonCode: function(oEvent) {
+      onClickUpdateReasonCode: function (oEvent) {
         let aSelectedReasonCodes, oMinLevelSelected, oIndex;
         let reasonCodesToBeAssigned = [];
         let that = this;
         this.busyDialog.open();
         aSelectedReasonCodes = this.getSelectedObjectsToUpdate();
         if (aSelectedReasonCodes.length > 0) {
-          aSelectedReasonCodes.sort(function(a, b) {
+          aSelectedReasonCodes.sort(function (a, b) {
             return a.level - b.level;
           });
           oMinLevelSelected = aSelectedReasonCodes[0].level;
@@ -2942,7 +2946,7 @@ sap.ui.define(
             sUrl,
             oRequestPayload,
             // success handler
-            function(oResponseData) {
+            function (oResponseData) {
               //Updating model
               that.getView().getModel('viewQuantityReportModel').setData(records);
               MessageToast.show(that.getI18nText('reasonCodeAssigned'));
@@ -2951,7 +2955,7 @@ sap.ui.define(
               that.updateReasonCodeDialog.close();
             },
             // error handler
-            function(oError, sHttpErrorMessage, iStatusCode) {
+            function (oError, sHttpErrorMessage, iStatusCode) {
               let err = oError ? oError : sHttpErrorMessage;
               that.showErrorMessage(err, true, true);
               that.busyDialog.close();
@@ -2963,7 +2967,7 @@ sap.ui.define(
         }
       },
 
-      prepareReasonCodeTableForUpdate: function() {
+      prepareReasonCodeTableForUpdate: function () {
         let oReasonCodeModel;
         let reasonCodeTable = this.updateReasonCodeDialog.getContent()[0];
         this.getReasonCodesForTimeElement();
@@ -2989,7 +2993,7 @@ sap.ui.define(
               arr = arr.concat(reasonCodeNestedObject);
             }
             oReasonCodeModel.setData({
-              timeElementReasonCodeTree: arr
+              timeElementReasonCodeTree: arr,
             });
             reasonCodeTable.getModel('oReasonCodeModel').checkUpdate();
           } else {
@@ -3003,18 +3007,18 @@ sap.ui.define(
         }
       },
 
-      getDateInPlantTimeZone: function(date) {
+      getDateInPlantTimeZone: function (date) {
         var sDate = moment(new Date(date)).tz(this.plantTimeZoneId).format('YYYY-MM-DD');
         var oDateFormatFrom = DateFormat.getDateInstance({ format: 'yMMMd', UTC: true });
         return oDateFormatFrom.format(new Date(sDate));
       },
 
-      getDateTimeInPlantTimeZone: function(dateTime) {
+      getDateTimeInPlantTimeZone: function (dateTime) {
         var sdate = DateTimeUtils.dmcDateToUTCFormat(dateTime, 'Etc/GMT');
         return DateTimeUtils.dmcDateTimeFormatterFromUTC(sdate, this.plantTimeZoneId, null);
       },
 
-      dmcDateToUTCFormat: function(date, timezone) {
+      dmcDateToUTCFormat: function (date, timezone) {
         let result = '';
         const timezoneInternal = timezone || _getPlantTimezone();
         const sFormattedDate = moment(date).locale('en').format('yyyy-MM-DD HH:mm:ss');
@@ -3023,7 +3027,7 @@ sap.ui.define(
         return result;
       },
 
-      getSelectedObjectsToUpdate: function() {
+      getSelectedObjectsToUpdate: function () {
         let oTable, oSelectedIndices, oPath, selectedObject;
         let selectedObjects = [];
         oTable = this.updateReasonCodeDialog.getContent()[0];
@@ -3036,7 +3040,7 @@ sap.ui.define(
         return selectedObjects;
       },
 
-      getReasonCodeDetail: function(sReasonCodeRef) {
+      getReasonCodeDetail: function (sReasonCodeRef) {
         let that = this;
         let oPromise = $.Deferred();
         let fnErrorCallback = (oError, sErrorMessage) => {
@@ -3050,7 +3054,7 @@ sap.ui.define(
         this.ajaxGetRequest(
           that.getPlantRestDataSourceUri() + 'resourceReasonCodes/' + encodeURIComponent(sReasonCodeRef),
           '',
-          oReasonCode => {
+          (oReasonCode) => {
             // Reason code object only contains ids of parent reason codes
             // Get all parent reason codes so descriptions can be displayed
             let sQuery =
@@ -3061,10 +3065,10 @@ sap.ui.define(
             that.ajaxGetRequest(
               that.getPlantRestDataSourceUri() + 'resourceReasonCodes?' + sQuery,
               '',
-              aReasonCodes =>
+              (aReasonCodes) =>
                 oPromise.resolve({
                   reasonCode: oReasonCode,
-                  parentCodes: that.ReasonCodeDialogUtil.buildReasonCodeParents(aReasonCodes, oReasonCode)
+                  parentCodes: that.ReasonCodeDialogUtil.buildReasonCodeParents(aReasonCodes, oReasonCode),
                 }),
               fnErrorCallback
             );
@@ -3075,7 +3079,7 @@ sap.ui.define(
         return oPromise;
       },
 
-      _validatePositiveNumber: function(sInputValue) {
+      _validatePositiveNumber: function (sInputValue) {
         //Regex for Valid Numbers(10 digits before decimal and 3 digits after decimal)
         var regex = /^\s*(?=.*[1-9])\d{0,10}(?:\.\d{1,3})?\s*$/;
         var isValidInput = true;
@@ -3090,9 +3094,9 @@ sap.ui.define(
       },
 
       /***
-         * Validation to enable Confirm Button on Post Pop-up
-         */
-      _enableConfirmButton: function() {
+       * Validation to enable Confirm Button on Post Pop-up
+       */
+      _enableConfirmButton: function () {
         var oView = this.getView();
         var isErrorStateExist = false;
         var oFormContent = this.byId('reportQuantityForm').getContent();
@@ -3113,21 +3117,21 @@ sap.ui.define(
         }
       },
 
-      _endsWith: function(str, suffix) {
+      _endsWith: function (str, suffix) {
         return str.indexOf(suffix, str.length - suffix.length) !== -1;
       },
 
-      _getNonconformances: function() {
+      _getNonconformances: function () {
         var sUrl = this.getPublicApiRestDataSourceUri() + 'nonconformance/v1/nonconformances';
         var oParams = {
           plant: this.getPodController().getUserPlant(),
-          sfc: this.getPodSelectionModel().selectedOrderData.sfc
+          sfc: this.getPodSelectionModel().selectedOrderData.sfc,
         };
         return new Promise((resolve, reject) => this.ajaxGetRequest(sUrl, oParams, resolve, reject));
       },
 
-      _hasNonConformances: async function() {
-        var aNonconformances = await this._getNonconformances().catch(oError => {
+      _hasNonConformances: async function () {
+        var aNonconformances = await this._getNonconformances().catch((oError) => {
           console.error(oError);
         });
 
@@ -3136,22 +3140,22 @@ sap.ui.define(
           return {
             count: 0,
             items: [],
-            formattedText: ''
+            formattedText: '',
           };
 
         //Filter the response. If there are NC in OPEN state, return true
-        var aOpenNC = aNonconformances.filter(oNC => oNC.state === 'OPEN');
+        var aOpenNC = aNonconformances.filter((oNC) => oNC.state === 'OPEN');
         if (aOpenNC && aOpenNC.length > 0) {
           var sFormattedText =
             '<p><strong>Open Nonconformance:</strong></p>' +
             '<ul>' +
-            aOpenNC.map(oNC => `<li>${oNC.incidentNumber.incidentNumber} - ${oNC.code.code} - ${oNC.code.description}</li>`).join('') +
+            aOpenNC.map((oNC) => `<li>${oNC.incidentNumber.incidentNumber} - ${oNC.code.code} - ${oNC.code.description}</li>`).join('') +
             '</ul>';
 
           return {
             count: aOpenNC.length,
             items: aOpenNC,
-            formattedText: sFormattedText
+            formattedText: sFormattedText,
           };
         }
 
@@ -3159,11 +3163,11 @@ sap.ui.define(
         return {
           count: 0,
           items: [],
-          formattedText: ''
+          formattedText: '',
         };
       },
 
-      _postConfirmationNonMilestone: function() {
+      _postConfirmationNonMilestone: function () {
         //AD_PHASE_CONFIRMATION_V3 - CPP_qtyAndActivityConfirmationAndCompletionOfNonMilestoneOperations
         var sUrl =
           this.getPublicApiRestDataSourceUri() +
@@ -3183,11 +3187,11 @@ sap.ui.define(
           InRoutingStep: oSelectedPhase.stepId,
           InSFC: oSelectedOrder.sfc,
           InUser: this.getPodController().getUserId(),
-          InWorkCenter: oSelectedPhase.workCenter.workcenter
+          InWorkCenter: oSelectedPhase.workCenter.workcenter,
         };
 
         return new Promise((resolve, reject) => this.ajaxPostRequest(sUrl, oPayload, resolve, reject));
-      }
+      },
     });
 
     return oPluginViewController;
