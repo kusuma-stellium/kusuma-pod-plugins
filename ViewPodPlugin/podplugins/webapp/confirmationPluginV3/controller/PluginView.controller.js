@@ -145,6 +145,7 @@ sap.ui.define(
         this.getView().setModel(new JSONModel({ value: this.getI18nText('reportQuantities', [0]) }), 'reportQuantitiesTitle');
         this.getView().setModel(new JSONModel({ customFieldVisible: false }), 'data');
         this.getView().setModel(new JSONModel({ value: [] }), 'quantitiesModel');
+        this.getView().setModel(new JSONModel({}), 'orderDataModel');
 
         this.prepareBusyDialog();
         this.handleOnDialogConfirmBtnThrottled = this._throttle(this.handleOnDialogConfirmBtn, 1000);
@@ -291,13 +292,16 @@ sap.ui.define(
               this.batchCorrection = aValues[0].value;
             }
 
+            var oSelectedOrder = this.getPodSelectionModel().selectedOrderData,
+              fSfcQuantity = parseFloat(oSelectedOrder.sfcQty).toFixed(3),
+              sUOM = oSelectedOrder.productionCommercialUom;
             if (this.batchCorrection.content && this.batchCorrection.content.length > 0) {
               this.byId('idApprovedQtyTitle').setText(this.getI18nText('approvedGRQtyTitle', [this.batchCorrection.content[0].grQty]));
+              this.byId('idSfcQtyTitle').setText(this.getI18nText('sfcQtyTitle', [fSfcQuantity, sUOM]));
             } else {
-              var oSelectedOrder = this.getPodSelectionModel().selectedOrderData,
-                fPlannedQty = oSelectedOrder.plannedQty,
-                sUOM = oSelectedOrder.productionInternalUom;
+              var fPlannedQty = oSelectedOrder.plannedQty;
               this.byId('idApprovedQtyTitle').setText(this.getI18nText('GRQtyTitle', [parseFloat(fPlannedQty).toFixed(3), sUOM]));
+              this.byId('idSfcQtyTitle').setText(this.getI18nText('sfcQtyTitle', [fSfcQuantity, sUOM]));
             }
 
             var oBatchCorrection = this.batchCorrection;
@@ -2596,7 +2600,7 @@ sap.ui.define(
         }.bind(this);
       },
 
-      handleOnDialogConfirmBtn: function () {
+      handleOnDialogConfirmBtn: async function () {
         if (ErrorHandler.hasErrors()) {
           return;
         }
@@ -2626,6 +2630,33 @@ sap.ui.define(
         var scrapValue = parseFloat(oScrapInput.getValue()) || 0;
         var sfcQuantityValue = parseFloat(oSfcQuantityInput) || 0;
         //var sfcquantity = this.getPodSelectionModel().selectedOrderData.sfcPlannedQtyInProductionUom
+
+        /* Add checks to ensure that overdelivery does not happen
+            1. Get the tolerance for the header quantity from the order custom data
+            2. Check if the current confirmed qty exceeds the order qty tolerance
+        */
+        var oOrderData = await this._getOrderData()
+          .then((oData) => {
+            var oCustomValues = oData.customValues.reduce((acc, oItem) => {
+              acc[oItem.attribute] = oItem.value;
+              return acc;
+            }, {});
+            oData.customData = oCustomValues;
+            this.getView().getModel('orderDataModel').setProperty('/', oData);
+            return oData;
+          })
+          .catch((error) => ({}));
+
+        // var fTotalConfirmedQty = await this._getQuantityConfirmationSummary().then((oData) => {
+        //   return oData.totalYieldQuantity.value + oData.totalScrapQuantity.value;
+        // });
+
+        //Increase the SFC quantity value used in checks with the tolerance percentage
+        if (oOrderData && oOrderData.customData && oOrderData.customData['OVER_DELIVERY_TOLERANCE']) {
+          var fTolPercent = parseFloat(oOrderData.customData['OVER_DELIVERY_TOLERANCE']) / 100;
+          sfcQuantityValue = sfcQuantityValue * (1 + fTolPercent);
+        }
+
         if (yieldValue + scrapValue > sfcQuantityValue) {
           MessageBox.error('Quantity (sum of yield and scrap) should not exceed SFC quantity');
           oYieldInput.setValueState(sap.ui.core.ValueState.Error);
@@ -3224,6 +3255,27 @@ sap.ui.define(
         };
 
         return new Promise((resolve, reject) => this.ajaxPostRequest(sUrl, oPayload, resolve, reject));
+      },
+
+      _getOrderData: function () {
+        var oSelectedOrder = this.getPodSelectionModel().selectedOrderData,
+          sUrl = this.getPublicApiRestDataSourceUri() + 'order/v1/orders';
+        var oParams = {
+          plant: this.getPodController().getUserPlant(),
+          order: oSelectedOrder.order,
+        };
+        return new Promise((resolve, reject) => this.ajaxGetRequest(sUrl, oParams, resolve, reject));
+      },
+
+      _getQuantityConfirmationSummary: function () {
+        var sUrl = this.getPublicApiRestDataSourceUri() + 'quantityConfirmation/v1/postings';
+        var oPodSelectionModel = this.getPodSelectionModel();
+        var oParams = {
+          plant: this.getPodController().getUserPlant(),
+          sfc: oPodSelectionModel.selectedOrderData.sfc,
+          operationActivity: oPodSelectionModel.selectedPhaseData.phaseId,
+        };
+        return new Promise((resolve, reject) => this.ajaxGetRequest(sUrl, oParams, resolve, reject));
       },
     });
 
