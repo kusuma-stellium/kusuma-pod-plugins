@@ -293,13 +293,14 @@ sap.ui.define(
             }
 
             var oSelectedOrder = this.getPodSelectionModel().selectedOrderData,
-              fSfcQuantity = parseFloat(oSelectedOrder.sfcQty).toFixed(3),
+              fSfcQuantity = parseFloat(oSelectedOrder.sfcPlannedQtyInProductionUom).toFixed(3),
+              fPlannedQty = oSelectedOrder.plannedQtyInProductionUom,
               sUOM = oSelectedOrder.productionCommercialUom;
+
             if (this.batchCorrection.content && this.batchCorrection.content.length > 0) {
-              this.byId('idApprovedQtyTitle').setText(this.getI18nText('approvedGRQtyTitle', [this.batchCorrection.content[0].grQty]));
-              this.byId('idSfcQtyTitle').setText(this.getI18nText('sfcQtyTitle', [fSfcQuantity, sUOM]));
+              this.byId('idApprovedQtyTitle').setText(this.getI18nText('GRQtyTitle', [parseFloat(fPlannedQty).toFixed(3), sUOM]));
+              this.byId('idSfcQtyTitle').setText(this.getI18nText('approvedSfcQtyTitle', [this.batchCorrection.content[0].grQty, sUOM]));
             } else {
-              var fPlannedQty = oSelectedOrder.plannedQty;
               this.byId('idApprovedQtyTitle').setText(this.getI18nText('GRQtyTitle', [parseFloat(fPlannedQty).toFixed(3), sUOM]));
               this.byId('idSfcQtyTitle').setText(this.getI18nText('sfcQtyTitle', [fSfcQuantity, sUOM]));
             }
@@ -2399,7 +2400,7 @@ sap.ui.define(
           var oYieldInput = aCells[0];
           var oUpdateInput = aCells[1];
           oUpdateInput.setEditable(true); // Assuming the 3rd column has the input for result
-          var totalqty = this.getPodSelectionModel().selectedOrderData.sfcPlannedQty;
+          var totalqty = this.getPodSelectionModel().selectedOrderData.sfcPlannedQtyInProductionUom;
           var oScrap = this.byId('scrapQuantity');
           var fscrapValue = parseFloat(oScrap.getValue()) || 0;
           var fYieldValue = parseFloat(oInput.getValue()) || 0;
@@ -2508,7 +2509,7 @@ sap.ui.define(
           var oYieldInput = aCells[0];
           var oUpdateInput = aCells[1];
           oUpdateInput.setEditable(true); // Assuming the 3rd column has the input for result
-          var totalqty = this.getPodSelectionModel().selectedOrderData.sfcPlannedQty;
+          var totalqty = this.getPodSelectionModel().selectedOrderData.sfcPlannedQtyInProductionUom;
           var oScrap = this.byId('scrapQuantity');
           var fscrapValue = parseFloat(oScrap.getValue()) || 0;
           var fYieldValue = parseFloat(oInput.getValue()) || 0;
@@ -2624,7 +2625,7 @@ sap.ui.define(
           var oSfcQuantityInput = this.batchCorrection.content[0].grQty;
         } else {
           //  var oSfcQuantityInput = this.getPodSelectionModel().selectedOrderData.plannedQty
-          var oSfcQuantityInput = this.getPodSelectionModel().selectedOrderData.sfcPlannedQty;
+          var oSfcQuantityInput = this.getPodSelectionModel().selectedOrderData.sfcPlannedQtyInProductionUom;
         }
         var yieldValue = parseFloat(oYieldInput.getValue()) || 0;
         var scrapValue = parseFloat(oScrapInput.getValue()) || 0;
